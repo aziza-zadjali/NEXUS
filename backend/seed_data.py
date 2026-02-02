@@ -129,74 +129,96 @@ async def seed_database():
             "last_updated": "2025-07-15T07:00:00Z"
         }
     ]
-            "status": "approaching",
-            "berth_number": "",
-            "eta": "2025-01-22T14:00:00Z",
-            "cargo_type": "nacelles",
-            "last_updated": "2025-01-15T12:00:00Z"
-        },
-        {
-            "id": "v3",
-            "vessel_id": "SAL-V103",
-            "vessel_name": "Wind Turbine Express",
-            "status": "unloading",
-            "berth_number": "B-7",
-            "eta": "2025-01-15T06:00:00Z",
-            "cargo_type": "tower_sections",
-            "last_updated": "2025-01-15T14:00:00Z"
-        }
-    ]
     await db.port_vessels.insert_many(vessels)
     print(f"Created {len(vessels)} vessels")
     
+    # ============================================
+    # WIND TURBINE SHIPMENTS - In Transit
+    # ============================================
     shipments = [
         {
             "id": "s1",
-            "shipment_id": "SHP-2025-001",
-            "vessel_id": "DQM-V001",
-            "component_type": "turbine_blade",
-            "status": "at_port",
-            "destination_site": "Duqm Hydrogen Hub A",
-            "last_updated": "2025-01-15T12:00:00Z"
+            "shipment_id": "WT-SHP-001",
+            "vessel_id": "DQM-WT001",
+            "component_type": "Turbine Blade (78m)",
+            "quantity": 6,
+            "status": "loading_transport",
+            "origin": "Port of Duqm",
+            "destination_site": "Dhofar Wind Farm - Block A",
+            "current_location": "Duqm Port Heavy Cargo Area",
+            "transport_convoy": "ASYAD-HEAVY-001",
+            "last_updated": "2025-07-15T12:00:00Z"
         },
         {
             "id": "s2",
-            "shipment_id": "SHP-2025-002",
-            "vessel_id": "DQM-V002",
-            "component_type": "nacelle",
+            "shipment_id": "WT-SHP-002",
+            "vessel_id": "SLL-WT003",
+            "component_type": "Tower Section (Base)",
+            "quantity": 4,
             "status": "in_transit",
-            "destination_site": "Duqm Hydrogen Hub B",
-            "last_updated": "2025-01-15T12:00:00Z"
+            "origin": "Port of Salalah",
+            "destination_site": "Dhofar Wind Farm - Block A",
+            "current_location": "Route A-47, KM 156",
+            "transport_convoy": "ASYAD-HEAVY-002",
+            "last_updated": "2025-07-15T11:00:00Z"
         },
         {
             "id": "s3",
-            "shipment_id": "SHP-2025-003",
-            "vessel_id": "SAL-V103",
-            "component_type": "tower_section",
-            "status": "at_port",
-            "destination_site": "Duqm Hydrogen Hub A",
-            "last_updated": "2025-01-15T14:00:00Z"
+            "shipment_id": "WT-SHP-003",
+            "vessel_id": "SLL-WT003",
+            "component_type": "Tower Section (Mid)",
+            "quantity": 4,
+            "status": "at_assembly_area",
+            "origin": "Port of Salalah",
+            "destination_site": "Dhofar Wind Farm - Block B",
+            "current_location": "Primary Assembly Area - Thumrait",
+            "transport_convoy": "ASYAD-HEAVY-003",
+            "last_updated": "2025-07-15T08:00:00Z"
+        },
+        {
+            "id": "s4",
+            "shipment_id": "WT-SHP-004",
+            "vessel_id": "DQM-WT001",
+            "component_type": "Nacelle (6MW)",
+            "quantity": 2,
+            "status": "delivered",
+            "origin": "Port of Duqm",
+            "destination_site": "Dhofar Wind Farm - Block A",
+            "current_location": "Site - Installation Point T-05",
+            "transport_convoy": "ASYAD-HEAVY-004",
+            "last_updated": "2025-07-14T16:00:00Z"
         }
     ]
     await db.fleet_shipments.insert_many(shipments)
     print(f"Created {len(shipments)} shipments")
     
+    # ============================================
+    # WIND FARM SITES - Concession Areas
+    # ============================================
     sites = [
         {
             "id": "site1",
-            "site_id": "DHH-A",
-            "site_name": "Duqm Hydrogen Hub A",
-            "readiness_status": "ready",
-            "expected_component": "turbine_blade",
-            "last_updated": "2025-01-15T12:00:00Z"
+            "site_id": "DWF-A",
+            "site_name": "Dhofar Wind Farm - Block A",
+            "readiness_status": "installing",
+            "expected_component": "Turbine Blade (78m)",
+            "capacity_mw": 150,
+            "turbines_planned": 25,
+            "turbines_installed": 8,
+            "contractor": "GE Renewable Energy",
+            "last_updated": "2025-07-15T10:00:00Z"
         },
         {
             "id": "site2",
-            "site_id": "DHH-B",
-            "site_name": "Duqm Hydrogen Hub B",
+            "site_id": "DWF-B",
+            "site_name": "Dhofar Wind Farm - Block B",
             "readiness_status": "preparing",
-            "expected_component": "nacelle",
-            "last_updated": "2025-01-15T12:00:00Z"
+            "expected_component": "Tower Section (Base)",
+            "capacity_mw": 100,
+            "turbines_planned": 16,
+            "turbines_installed": 0,
+            "contractor": "Siemens Gamesa",
+            "last_updated": "2025-07-15T09:00:00Z"
         },
         {
             "id": "site3",
