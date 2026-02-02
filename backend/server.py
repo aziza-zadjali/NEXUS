@@ -659,45 +659,6 @@ async def get_canvases_by_domain(domain_name: str, current_user: User = Depends(
             canvas['created_at'] = datetime.fromisoformat(canvas['created_at'])
     return canvases
 
-@api_router.get("/canvas/stats")
-async def get_canvas_stats(current_user: User = Depends(get_current_user)):
-    """Get statistics about data product canvases"""
-    total = await db.data_product_canvases.count_documents({})
-    active = await db.data_product_canvases.count_documents({"status": "active"})
-    draft = await db.data_product_canvases.count_documents({"status": "draft"})
-    deprecated = await db.data_product_canvases.count_documents({"status": "deprecated"})
-    
-    # Count by classification
-    source_aligned = await db.data_product_canvases.count_documents({"classification": "source-aligned"})
-    aggregate = await db.data_product_canvases.count_documents({"classification": "aggregate"})
-    consumer_aligned = await db.data_product_canvases.count_documents({"classification": "consumer-aligned"})
-    
-    # Count by domain
-    port_canvases = await db.data_product_canvases.count_documents({"domain": "port"})
-    fleet_canvases = await db.data_product_canvases.count_documents({"domain": "fleet"})
-    epc_canvases = await db.data_product_canvases.count_documents({"domain": "epc"})
-    logistics_canvases = await db.data_product_canvases.count_documents({"domain": "logistics"})
-    
-    return {
-        "total": total,
-        "by_status": {
-            "active": active,
-            "draft": draft,
-            "deprecated": deprecated
-        },
-        "by_classification": {
-            "source_aligned": source_aligned,
-            "aggregate": aggregate,
-            "consumer_aligned": consumer_aligned
-        },
-        "by_domain": {
-            "port": port_canvases,
-            "fleet": fleet_canvases,
-            "epc": epc_canvases,
-            "logistics": logistics_canvases
-        }
-    }
-
 @api_router.get("/governance/mappings", response_model=List[SemanticMapping])
 async def get_mappings(current_user: User = Depends(get_current_user)):
     mappings = await db.semantic_mappings.find({}, {"_id": 0}).to_list(100)
