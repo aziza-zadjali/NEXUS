@@ -451,71 +451,118 @@ async def seed_database():
     await db.event_logs.insert_many(events)
     print(f"Created {len(events)} event logs")
     
+    # ============================================
+    # TRANSPORT ROUTES - Asyad Heavy Transport Network
+    # ============================================
     routes = [
         {
             "id": "route1",
-            "route_name": "Port Duqm to Hub A",
-            "origin": "Port of Duqm",
-            "destination": "Duqm Hydrogen Hub A",
-            "transport_mode": "Heavy Duty Truck",
-            "distance_km": 45.5,
-            "estimated_duration_hours": 3.5,
-            "road_restrictions": ["Height limit 6m", "Weight limit 120 tons", "Night transport only"],
+            "route_name": "Duqm Port → Primary Assembly Duqm",
+            "origin": "Port of Duqm - Heavy Cargo Berth",
+            "destination": "Primary Assembly Area - Duqm SEZ",
+            "transport_mode": "Asyad Heavy Multi-Axle Trailer",
+            "distance_km": 12.5,
+            "estimated_duration_hours": 1.5,
+            "road_restrictions": ["Height limit 6.5m", "Weight limit 150 tons", "24/7 permitted"],
             "status": "active",
-            "last_updated": "2025-01-15T10:00:00Z"
+            "convoy_assigned": "ASYAD-HEAVY-001",
+            "last_updated": "2025-07-15T10:00:00Z"
         },
         {
             "id": "route2",
-            "route_name": "Port Salalah to Assembly Area",
-            "origin": "Port of Salalah",
-            "destination": "Secondary Assembly Area",
-            "transport_mode": "Specialized Heavy Transport",
-            "distance_km": 78.2,
-            "estimated_duration_hours": 6.0,
-            "road_restrictions": ["Blade length 80m", "Escort vehicle required", "Weather dependent"],
+            "route_name": "Salalah Port → Thumrait Assembly",
+            "origin": "Port of Salalah - Heavy Cargo Terminal",
+            "destination": "Primary Assembly Area - Thumrait",
+            "transport_mode": "Asyad Blade Transport Specialist",
+            "distance_km": 165.0,
+            "estimated_duration_hours": 8.0,
+            "road_restrictions": ["Blade length 78m", "Escort front & rear", "Night transport 20:00-06:00"],
             "status": "active",
-            "last_updated": "2025-01-15T10:00:00Z"
+            "convoy_assigned": "ASYAD-HEAVY-002",
+            "last_updated": "2025-07-15T10:00:00Z"
         },
         {
             "id": "route3",
-            "route_name": "Hub B Coastal Route",
-            "origin": "Port of Duqm",
-            "destination": "Duqm Hydrogen Hub B",
-            "transport_mode": "Multi-axle Trailer",
-            "distance_km": 62.0,
-            "estimated_duration_hours": 4.5,
-            "road_restrictions": ["Bridge clearance 5.5m", "Permit required"],
+            "route_name": "SOHAR Port → Duqm Assembly",
+            "origin": "SOHAR Port & Freezone",
+            "destination": "Primary Assembly Area - Duqm SEZ",
+            "transport_mode": "Asyad Heavy Self-Propelled Modular",
+            "distance_km": 420.0,
+            "estimated_duration_hours": 18.0,
+            "road_restrictions": ["Multi-day convoy", "ROP escort", "Bridge pre-clearance"],
+            "status": "active",
+            "convoy_assigned": "ASYAD-HEAVY-003",
+            "last_updated": "2025-07-15T10:00:00Z"
+        },
+        {
+            "id": "route4",
+            "route_name": "Thumrait → Dhofar Wind Farm A",
+            "origin": "Primary Assembly Area - Thumrait",
+            "destination": "Dhofar Wind Farm - Block A (Concession)",
+            "transport_mode": "Asyad Site Delivery Crawler",
+            "distance_km": 85.0,
+            "estimated_duration_hours": 6.0,
+            "road_restrictions": ["Off-road sections", "Crane support at site"],
+            "status": "active",
+            "convoy_assigned": "ASYAD-SITE-001",
+            "last_updated": "2025-07-15T10:00:00Z"
+        },
+        {
+            "id": "route5",
+            "route_name": "Secondary Assembly → Wind Farm B",
+            "origin": "Secondary Assembly - Site Beta",
+            "destination": "Dhofar Wind Farm - Block B (Concession)",
+            "transport_mode": "Asyad Short-Haul Transport",
+            "distance_km": 8.0,
+            "estimated_duration_hours": 0.5,
+            "road_restrictions": ["Internal site road", "Site access permit"],
             "status": "planned",
-            "last_updated": "2025-01-15T10:00:00Z"
+            "convoy_assigned": "ASYAD-SITE-002",
+            "last_updated": "2025-07-15T10:00:00Z"
         }
     ]
     await db.logistics_routes.insert_many(routes)
     print(f"Created {len(routes)} logistics routes")
     
+    # ============================================
+    # PERMITS - ROP and Ministry Approvals
+    # ============================================
     permits = [
         {
             "id": "permit1",
-            "permit_number": "TRP-2025-001",
+            "permit_number": "ROP-TRP-2025-0847",
             "permit_type": "Oversized Load Transport",
-            "shipment_id": "SHP-2025-001",
-            "issuing_authority": "Royal Oman Police - Traffic Department",
+            "shipment_id": "WT-SHP-001",
+            "issuing_authority": "Royal Oman Police - Directorate General of Traffic",
             "status": "approved",
-            "requested_date": "2025-01-10",
-            "approved_date": "2025-01-12",
-            "expiry_date": "2025-02-10",
-            "restrictions": ["Night transport only", "Escort vehicle required"]
+            "requested_date": "2025-07-10",
+            "approved_date": "2025-07-12",
+            "expiry_date": "2025-08-12",
+            "restrictions": ["Night transport 20:00-06:00", "Front & rear escort", "Route A-47 only"]
         },
         {
             "id": "permit2",
-            "permit_number": "TRP-2025-002",
-            "permit_type": "Special Cargo Permit",
-            "shipment_id": "SHP-2025-002",
-            "issuing_authority": "Ministry of Transport",
+            "permit_number": "MOT-HVY-2025-0312",
+            "permit_type": "Heavy Cargo Special Permit",
+            "shipment_id": "WT-SHP-002",
+            "issuing_authority": "Ministry of Transport, Communications and IT",
+            "status": "approved",
+            "requested_date": "2025-07-08",
+            "approved_date": "2025-07-11",
+            "expiry_date": "2025-08-11",
+            "restrictions": ["Multi-axle configuration", "Bridge pre-inspection required"]
+        },
+        {
+            "id": "permit3",
+            "permit_number": "ROP-TRP-2025-0892",
+            "permit_type": "Blade Transport Escort",
+            "shipment_id": "WT-SHP-003",
+            "issuing_authority": "Royal Oman Police - Directorate General of Traffic",
             "status": "pending",
-            "requested_date": "2025-01-14",
+            "requested_date": "2025-07-14",
             "approved_date": None,
             "expiry_date": None,
-            "restrictions": ["Weather clearance needed", "Height restriction waiver"]
+            "restrictions": ["78m blade length", "Turning radius clearance", "Weather dependent"]
         },
         {
             "id": "permit3",
