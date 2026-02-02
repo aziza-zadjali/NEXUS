@@ -202,6 +202,193 @@ class HydrogenDataMeshTester:
             "User registration", "POST", "auth/register", 200, test_user, auth_required=False
         )
 
+    # ============================================
+    # NEW DATA MESH ENHANCEMENT API TESTS
+    # ============================================
+
+    def test_domain_journey_apis(self):
+        """Test Domain Ownership APIs - Domain Journey"""
+        print("\n🔍 Testing Domain Journey APIs...")
+        
+        # Test GET /api/domains/journey
+        journeys_success, journeys = self.run_test(
+            "Get domain journeys", "GET", "domains/journey", 200
+        )
+        
+        # Test GET /api/domains/journey/port
+        port_journey_success, port_journey = self.run_test(
+            "Get port domain journey", "GET", "domains/journey/port", 200
+        )
+        
+        return journeys_success and port_journey_success
+
+    def test_data_contracts_apis(self):
+        """Test Data as a Product APIs - Data Contracts"""
+        print("\n🔍 Testing Data Contracts APIs...")
+        
+        # Test GET /api/contracts
+        contracts_success, contracts = self.run_test(
+            "Get data contracts", "GET", "contracts", 200
+        )
+        
+        # Test POST /api/contracts
+        test_contract = {
+            "data_product_id": f"product-{datetime.now().strftime('%H%M%S')}",
+            "version": "1.0",
+            "owner": "admin@port.om",
+            "description": "Test data contract for hydrogen vessel tracking",
+            "schema_definition": {
+                "vessel_id": "string",
+                "status": "string",
+                "timestamp": "datetime"
+            },
+            "quality_sla": {
+                "availability": 99.9,
+                "freshness_minutes": 15,
+                "accuracy_threshold": 95.0
+            },
+            "terms_of_use": "Internal use only for hydrogen logistics",
+            "update_frequency": "15min",
+            "retention_period": "2 years"
+        }
+        
+        create_contract_success, created_contract = self.run_test(
+            "Create data contract", "POST", "contracts", 200, test_contract
+        )
+        
+        return contracts_success and create_contract_success
+
+    def test_quality_metrics_apis(self):
+        """Test Data as a Product APIs - Quality Metrics"""
+        print("\n🔍 Testing Quality Metrics APIs...")
+        
+        # Test GET /api/quality/metrics
+        metrics_success, metrics = self.run_test(
+            "Get quality metrics", "GET", "quality/metrics", 200
+        )
+        
+        # Test POST /api/quality/metrics
+        test_metric = {
+            "data_product_id": f"product-{datetime.now().strftime('%H%M%S')}",
+            "metric_type": "availability",
+            "value": 99.5,
+            "threshold": 99.0,
+            "status": "passing"
+        }
+        
+        create_metric_success, created_metric = self.run_test(
+            "Create quality metric", "POST", "quality/metrics", 200, test_metric
+        )
+        
+        return metrics_success and create_metric_success
+
+    def test_data_lineage_apis(self):
+        """Test Data as a Product APIs - Data Lineage"""
+        print("\n🔍 Testing Data Lineage APIs...")
+        
+        # Test GET /api/lineage
+        lineage_success, lineage = self.run_test(
+            "Get data lineage", "GET", "lineage", 200
+        )
+        
+        # Test POST /api/lineage
+        test_lineage = {
+            "source_product_id": f"source-{datetime.now().strftime('%H%M%S')}",
+            "target_product_id": f"target-{datetime.now().strftime('%H%M%S')}",
+            "relationship_type": "transformation",
+            "transformation_description": "Vessel data aggregated into fleet summary"
+        }
+        
+        create_lineage_success, created_lineage = self.run_test(
+            "Create data lineage", "POST", "lineage", 200, test_lineage
+        )
+        
+        return lineage_success and create_lineage_success
+
+    def test_platform_capabilities_apis(self):
+        """Test Self-Serve Platform APIs - Platform Capabilities"""
+        print("\n🔍 Testing Platform Capabilities APIs...")
+        
+        # Test GET /api/platform/capabilities
+        capabilities_success, capabilities = self.run_test(
+            "Get platform capabilities", "GET", "platform/capabilities", 200
+        )
+        
+        return capabilities_success
+
+    def test_platform_stats_apis(self):
+        """Test Self-Serve Platform APIs - Platform Stats"""
+        print("\n🔍 Testing Platform Stats APIs...")
+        
+        # Test GET /api/platform/stats
+        stats_success, stats = self.run_test(
+            "Get platform stats", "GET", "platform/stats", 200
+        )
+        
+        return stats_success
+
+    def test_governance_compliance_apis(self):
+        """Test Federated Governance APIs - Compliance Rules"""
+        print("\n🔍 Testing Governance Compliance APIs...")
+        
+        # Test GET /api/governance/compliance
+        compliance_success, compliance = self.run_test(
+            "Get compliance rules", "GET", "governance/compliance", 200
+        )
+        
+        # Test POST /api/governance/compliance (admin only)
+        test_compliance_rule = {
+            "rule_name": f"Test Rule {datetime.now().strftime('%H%M%S')}",
+            "standard": "ISO 27001",
+            "description": "Test compliance rule for data security",
+            "severity": "high",
+            "applicable_domains": ["port", "fleet"],
+            "validation_logic": "data.encryption == 'AES-256'",
+            "status": "active"
+        }
+        
+        create_compliance_success, created_compliance = self.run_test(
+            "Create compliance rule", "POST", "governance/compliance", 200, test_compliance_rule
+        )
+        
+        return compliance_success and create_compliance_success
+
+    def test_governance_standards_apis(self):
+        """Test Federated Governance APIs - Interoperability Standards"""
+        print("\n🔍 Testing Governance Standards APIs...")
+        
+        # Test GET /api/governance/standards
+        standards_success, standards = self.run_test(
+            "Get interoperability standards", "GET", "governance/standards", 200
+        )
+        
+        # Test POST /api/governance/standards (admin only)
+        test_standard = {
+            "name": f"Test Standard {datetime.now().strftime('%H%M%S')}",
+            "version": "1.0",
+            "description": "Test interoperability standard for hydrogen data exchange",
+            "supported_domains": ["port", "fleet", "epc"],
+            "compliance_level": "certified",
+            "certification_date": "2024-12-20"
+        }
+        
+        create_standard_success, created_standard = self.run_test(
+            "Create interoperability standard", "POST", "governance/standards", 200, test_standard
+        )
+        
+        return standards_success and create_standard_success
+
+    def test_governance_dashboard_apis(self):
+        """Test Federated Governance APIs - Governance Dashboard"""
+        print("\n🔍 Testing Governance Dashboard APIs...")
+        
+        # Test GET /api/governance/dashboard
+        dashboard_success, dashboard = self.run_test(
+            "Get governance dashboard", "GET", "governance/dashboard", 200
+        )
+        
+        return dashboard_success
+
 def main():
     print("🚀 Starting Oman National Hydrogen Data Mesh API Tests")
     print("=" * 60)
