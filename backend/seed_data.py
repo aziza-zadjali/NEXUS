@@ -222,11 +222,15 @@ async def seed_database():
         },
         {
             "id": "site3",
-            "site_id": "DHH-C",
-            "site_name": "Duqm Hydrogen Hub C",
-            "readiness_status": "installing",
-            "expected_component": "tower_section",
-            "last_updated": "2025-01-15T13:00:00Z"
+            "site_id": "DWF-C",
+            "site_name": "Duqm Wind Farm",
+            "readiness_status": "ready",
+            "expected_component": "Nacelle",
+            "capacity_mw": 200,
+            "turbines_planned": 32,
+            "turbines_installed": 15,
+            "contractor": "Vestas",
+            "last_updated": "2025-07-15T11:00:00Z"
         }
     ]
     await db.epc_sites.insert_many(sites)
