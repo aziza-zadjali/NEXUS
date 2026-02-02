@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { 
   Server, Wrench, Search, Eye, FileText, Lock,
   CheckCircle2, Activity, BarChart3, Users, 
-  Zap, Database, GitBranch, Settings
+  Zap, Database, Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -42,26 +42,15 @@ function PlatformCapabilities() {
     }
   };
 
-  const getCategoryIcon = (category) => {
-    switch(category) {
-      case 'Creation': return Wrench;
-      case 'Discovery': return Search;
-      case 'Observability': return Eye;
-      case 'Governance': return FileText;
-      case 'Security': return Lock;
-      default: return Settings;
-    }
-  };
-
-  const getCategoryColor = (category) => {
-    switch(category) {
-      case 'Creation': return 'emerald';
-      case 'Discovery': return 'blue';
-      case 'Observability': return 'purple';
-      case 'Governance': return 'orange';
-      case 'Security': return 'red';
-      default: return 'slate';
-    }
+  const getCategoryConfig = (category) => {
+    const configs = {
+      'Creation': { icon: Wrench, bgClass: 'bg-emerald-100', textClass: 'text-emerald-600', borderClass: 'border-t-emerald-500', badgeClass: 'bg-emerald-100 text-emerald-700' },
+      'Discovery': { icon: Search, bgClass: 'bg-blue-100', textClass: 'text-blue-600', borderClass: 'border-t-blue-500', badgeClass: 'bg-blue-100 text-blue-700' },
+      'Observability': { icon: Eye, bgClass: 'bg-purple-100', textClass: 'text-purple-600', borderClass: 'border-t-purple-500', badgeClass: 'bg-purple-100 text-purple-700' },
+      'Governance': { icon: FileText, bgClass: 'bg-orange-100', textClass: 'text-orange-600', borderClass: 'border-t-orange-500', badgeClass: 'bg-orange-100 text-orange-700' },
+      'Security': { icon: Lock, bgClass: 'bg-red-100', textClass: 'text-red-600', borderClass: 'border-t-red-500', badgeClass: 'bg-red-100 text-red-700' }
+    };
+    return configs[category] || { icon: Settings, bgClass: 'bg-slate-100', textClass: 'text-slate-600', borderClass: 'border-t-slate-500', badgeClass: 'bg-slate-100 text-slate-700' };
   };
 
   if (loading) {
@@ -79,13 +68,12 @@ function PlatformCapabilities() {
   return (
     <Layout>
       <div className="space-y-8" data-testid="platform-capabilities-page">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-emerald-600 to-teal-500 rounded-[50px] p-12 text-white relative overflow-hidden shadow-2xl border-b-8 border-emerald-400">
+        <div className="bg-gradient-to-br from-emerald-600 to-teal-500 rounded-3xl p-12 text-white relative overflow-hidden shadow-2xl">
           <div className="relative z-10">
             <Badge className="bg-white/20 text-white border-white/30 mb-4 uppercase tracking-widest text-xs font-bold">
               Self-Serve Data Infrastructure
             </Badge>
-            <h1 className="text-5xl font-black uppercase tracking-tighter mb-3 leading-none">Platform Capabilities</h1>
+            <h1 className="text-4xl font-black uppercase tracking-tighter mb-3">Platform Capabilities</h1>
             <p className="text-emerald-100 font-medium text-lg max-w-2xl">
               Domain-agnostic tools and infrastructure enabling teams to build, execute, 
               and maintain interoperable data products without central dependencies.
@@ -94,7 +82,6 @@ function PlatformCapabilities() {
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
         </div>
 
-        {/* Platform Stats */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="border-l-4 border-l-emerald-500">
@@ -144,7 +131,6 @@ function PlatformCapabilities() {
           </div>
         )}
 
-        {/* Products by Domain */}
         {stats && (
           <Card>
             <CardHeader>
@@ -153,53 +139,55 @@ function PlatformCapabilities() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {Object.entries(stats.products_by_domain).map(([domain, count]) => {
-                  const maxCount = Math.max(...Object.values(stats.products_by_domain));
-                  const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
-                  const colors = {
-                    port: 'blue',
-                    fleet: 'purple',
-                    epc: 'green',
-                    logistics: 'orange'
-                  };
-                  const color = colors[domain] || 'slate';
-                  
-                  return (
-                    <div key={domain} className="p-4 rounded-xl border">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-bold text-slate-700 capitalize">{domain}</span>
-                        <Badge className={`bg-${color}-100 text-${color}-700`}>{count}</Badge>
-                      </div>
-                      <Progress value={percentage} className="h-2" />
-                    </div>
-                  );
-                })}
+                <div className="p-4 rounded-xl border">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-bold text-slate-700">Port</span>
+                    <Badge className="bg-blue-100 text-blue-700">{stats.products_by_domain?.port || 0}</Badge>
+                  </div>
+                  <Progress value={((stats.products_by_domain?.port || 0) / Math.max(...Object.values(stats.products_by_domain || {1:1}))) * 100} className="h-2" />
+                </div>
+                <div className="p-4 rounded-xl border">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-bold text-slate-700">Fleet</span>
+                    <Badge className="bg-purple-100 text-purple-700">{stats.products_by_domain?.fleet || 0}</Badge>
+                  </div>
+                  <Progress value={((stats.products_by_domain?.fleet || 0) / Math.max(...Object.values(stats.products_by_domain || {1:1}))) * 100} className="h-2" />
+                </div>
+                <div className="p-4 rounded-xl border">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-bold text-slate-700">EPC</span>
+                    <Badge className="bg-green-100 text-green-700">{stats.products_by_domain?.epc || 0}</Badge>
+                  </div>
+                  <Progress value={((stats.products_by_domain?.epc || 0) / Math.max(...Object.values(stats.products_by_domain || {1:1}))) * 100} className="h-2" />
+                </div>
+                <div className="p-4 rounded-xl border">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-bold text-slate-700">Logistics</span>
+                    <Badge className="bg-orange-100 text-orange-700">{stats.products_by_domain?.logistics || 0}</Badge>
+                  </div>
+                  <Progress value={((stats.products_by_domain?.logistics || 0) / Math.max(...Object.values(stats.products_by_domain || {1:1}))) * 100} className="h-2" />
+                </div>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Platform Capabilities Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {capabilities.map((capability) => {
-            const Icon = getCategoryIcon(capability.category);
-            const color = getCategoryColor(capability.category);
+            const config = getCategoryConfig(capability.category);
+            const Icon = config.icon;
             
             return (
-              <Card key={capability.id} className={`hover:shadow-lg transition-all hover:-translate-y-1 border-t-4 border-t-${color}-500`}>
+              <Card key={capability.id} className={`hover:shadow-lg transition-all hover:-translate-y-1 border-t-4 ${config.borderClass}`}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
-                    <div className={`w-12 h-12 rounded-2xl bg-${color}-100 text-${color}-600 flex items-center justify-center`}>
+                    <div className={`w-12 h-12 rounded-2xl ${config.bgClass} ${config.textClass} flex items-center justify-center`}>
                       <Icon className="h-6 w-6" />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge 
-                        variant={capability.status === 'active' ? 'default' : 'secondary'}
-                        className={capability.status === 'active' ? 'bg-emerald-500' : ''}
-                      >
-                        {capability.status}
-                      </Badge>
-                    </div>
+                    <Badge variant={capability.status === 'active' ? 'default' : 'secondary'}
+                      className={capability.status === 'active' ? 'bg-emerald-500' : ''}>
+                      {capability.status}
+                    </Badge>
                   </div>
                   <CardTitle className="text-lg font-black uppercase tracking-tight mt-4">
                     {capability.name}
@@ -207,7 +195,6 @@ function PlatformCapabilities() {
                   <CardDescription>{capability.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Features */}
                   <div className="space-y-2">
                     <p className="text-xs font-bold text-slate-500 uppercase">Features</p>
                     <div className="flex flex-wrap gap-2">
@@ -218,8 +205,6 @@ function PlatformCapabilities() {
                       ))}
                     </div>
                   </div>
-
-                  {/* Usage Stats */}
                   <div className="flex items-center justify-between pt-4 border-t">
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-slate-400" />
@@ -227,7 +212,7 @@ function PlatformCapabilities() {
                         <strong className="text-slate-900">{capability.usage_count}</strong> uses
                       </span>
                     </div>
-                    <Badge className={`bg-${color}-100 text-${color}-700 uppercase text-xs font-bold`}>
+                    <Badge className={`${config.badgeClass} uppercase text-xs font-bold`}>
                       {capability.category}
                     </Badge>
                   </div>
@@ -237,7 +222,6 @@ function PlatformCapabilities() {
           })}
         </div>
 
-        {/* Platform Architecture */}
         <Card className="bg-slate-900 text-white overflow-hidden">
           <CardHeader>
             <CardTitle className="text-2xl font-black uppercase tracking-tighter">Self-Serve Platform Architecture</CardTitle>
@@ -275,7 +259,6 @@ function PlatformCapabilities() {
           </CardContent>
         </Card>
 
-        {/* Self-Serve Principle Explanation */}
         <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white">
           <CardHeader>
             <CardTitle className="text-2xl font-black uppercase tracking-tighter">Self-Serve Data Infrastructure Principle</CardTitle>
