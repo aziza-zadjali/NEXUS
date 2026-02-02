@@ -34,27 +34,36 @@ async def seed_database():
     users = [
         {
             "id": "user1",
-            "email": "admin@port.om",
-            "password": pwd_context.hash("password123"),
-            "name": "Port Authority Admin",
-            "domain": "port",
+            "email": "admin@asyad.om",
+            "password": pwd_context.hash("asyad2025"),
+            "name": "Asyad Operations Director",
+            "domain": "logistics",
             "role": "admin",
             "created_at": "2025-01-15T10:00:00Z"
         },
         {
             "id": "user2",
-            "email": "fleet@asyad.om",
+            "email": "port@asyad.om",
             "password": pwd_context.hash("password123"),
-            "name": "Asyad Fleet Manager",
-            "domain": "fleet",
+            "name": "Asyad Port Operations",
+            "domain": "port",
             "role": "editor",
             "created_at": "2025-01-15T10:00:00Z"
         },
         {
             "id": "user3",
-            "email": "site@hydrogen.om",
+            "email": "transport@asyad.om",
             "password": pwd_context.hash("password123"),
-            "name": "EPC Site Coordinator",
+            "name": "Asyad Heavy Transport",
+            "domain": "fleet",
+            "role": "editor",
+            "created_at": "2025-01-15T10:00:00Z"
+        },
+        {
+            "id": "user4",
+            "email": "epc@hydrom.om",
+            "password": pwd_context.hash("password123"),
+            "name": "Hydrom EPC Coordinator",
             "domain": "epc",
             "role": "editor",
             "created_at": "2025-01-15T10:00:00Z"
@@ -63,21 +72,63 @@ async def seed_database():
     await db.users.insert_many(users)
     print(f"Created {len(users)} users")
     
+    # ============================================
+    # WIND TURBINE VESSELS - Current at Ports
+    # ============================================
     vessels = [
         {
             "id": "v1",
-            "vessel_id": "DQM-V001",
-            "vessel_name": "Hydrogen Pioneer",
-            "status": "berthed",
-            "berth_number": "B-12",
-            "eta": "2025-01-20T08:00:00Z",
-            "cargo_type": "turbine_blades",
-            "last_updated": "2025-01-15T12:00:00Z"
+            "vessel_id": "DQM-WT001",
+            "vessel_name": "Wind Champion",
+            "status": "unloading",
+            "berth_number": "B-Heavy-01",
+            "eta": "2025-07-15T06:00:00Z",
+            "cargo_type": "Turbine Blades (78m)",
+            "cargo_quantity": 24,
+            "origin_port": "Shanghai, China",
+            "port": "Port of Duqm",
+            "last_updated": "2025-07-15T08:00:00Z"
         },
         {
             "id": "v2",
-            "vessel_id": "DQM-V002",
-            "vessel_name": "Green Energy Carrier",
+            "vessel_id": "SHR-WT002",
+            "vessel_name": "Green Transporter",
+            "status": "approaching",
+            "berth_number": "B-15",
+            "eta": "2025-07-16T14:00:00Z",
+            "cargo_type": "Nacelles (6MW)",
+            "cargo_quantity": 8,
+            "origin_port": "Rotterdam, Netherlands",
+            "port": "SOHAR Port",
+            "last_updated": "2025-07-15T10:00:00Z"
+        },
+        {
+            "id": "v3",
+            "vessel_id": "SLL-WT003",
+            "vessel_name": "Vestas Voyager",
+            "status": "berthed",
+            "berth_number": "B-Heavy-02",
+            "eta": "2025-07-14T20:00:00Z",
+            "cargo_type": "Tower Sections",
+            "cargo_quantity": 36,
+            "origin_port": "Busan, South Korea",
+            "port": "Port of Salalah",
+            "last_updated": "2025-07-15T09:00:00Z"
+        },
+        {
+            "id": "v4",
+            "vessel_id": "DQM-WT004",
+            "vessel_name": "Siemens Star",
+            "status": "scheduled",
+            "berth_number": "TBD",
+            "eta": "2025-07-20T08:00:00Z",
+            "cargo_type": "Generator Units",
+            "cargo_quantity": 12,
+            "origin_port": "Hamburg, Germany",
+            "port": "Port of Duqm",
+            "last_updated": "2025-07-15T07:00:00Z"
+        }
+    ]
             "status": "approaching",
             "berth_number": "",
             "eta": "2025-01-22T14:00:00Z",
