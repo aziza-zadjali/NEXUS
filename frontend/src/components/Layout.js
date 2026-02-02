@@ -1,13 +1,9 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Button } from '../components/ui/button';
+import { Button } from './ui/button';
 import { Database, Ship, Package, Building2, Shield, LogOut, LayoutDashboard, Network } from 'lucide-react';
 
-const AuthContext = React.createContext(null);
-
-function Layout({ children, user: userProp }) {
-  const contextUser = useContext(AuthContext);
-  const user = userProp || contextUser;
+function Layout({ children, user }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -66,14 +62,15 @@ function Layout({ children, user: userProp }) {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
+              const classes = 'flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black uppercase whitespace-nowrap transition-all tracking-wider ';
               const activeClass = isActive ? 'bg-cyan-500 text-white shadow-lg' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900';
               
               return (
                 <button
                   key={item.path}
                   onClick={() => navigate(item.path)}
-                  className={'flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black uppercase whitespace-nowrap transition-all tracking-wider ' + activeClass}
-                  data-testid={'nav-' + item.label.toLowerCase().replace(' ', '-')}
+                  className={classes + activeClass}
+                  data-testid={'nav-' + item.label.toLowerCase().replace(/ /g, '-')}
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
