@@ -402,14 +402,22 @@ function DataProductCanvas() {
     <Layout>
       <div className="space-y-8" data-testid="data-product-canvas-page">
         <div className="bg-gradient-to-br from-cyan-600 to-blue-600 rounded-3xl p-12 text-white relative overflow-hidden shadow-2xl">
-          <div className="relative z-10">
-            <Badge className="bg-white/20 text-white border-white/30 mb-4 uppercase tracking-widest text-xs font-bold">
-              Data Product Canvas
-            </Badge>
-            <h1 className="text-4xl font-black uppercase tracking-tighter mb-3">Data Products</h1>
-            <p className="text-cyan-100 font-medium text-lg max-w-2xl">
-              Design and manage data products using the Data Product Canvas framework.
-            </p>
+          <div className="relative z-10 flex items-start justify-between">
+            <div>
+              <Badge className="bg-white/20 text-white border-white/30 mb-4 uppercase tracking-widest text-xs font-bold">
+                Data Product Canvas
+              </Badge>
+              <h1 className="text-4xl font-black uppercase tracking-tighter mb-3">Data Products</h1>
+              <p className="text-cyan-100 font-medium text-lg max-w-2xl">
+                Design and manage data products using the Data Product Canvas framework.
+              </p>
+            </div>
+            <Button 
+              onClick={function() { navigate('/canvas/create'); }} 
+              className="bg-white text-cyan-600 hover:bg-cyan-50 font-bold"
+            >
+              <Plus className="h-5 w-5 mr-2" /> Design New Data Product
+            </Button>
           </div>
         </div>
 
