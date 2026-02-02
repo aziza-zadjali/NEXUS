@@ -5,9 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Shield, ArrowRightLeft, Lock, CheckCircle2, AlertTriangle,
-  Globe, FileCheck, Scale, Layers, Award, ExternalLink,
-  Activity, Users
+  Shield, ArrowRightLeft, Lock, CheckCircle2,
+  Globe, FileCheck, Award
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -52,23 +51,20 @@ function Governance() {
     }
   };
 
-  const getSeverityColor = (severity) => {
-    switch(severity) {
-      case 'critical': return 'bg-red-100 text-red-700 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'medium': return 'bg-amber-100 text-amber-700 border-amber-200';
-      case 'low': return 'bg-blue-100 text-blue-700 border-blue-200';
-      default: return 'bg-slate-100 text-slate-700 border-slate-200';
-    }
+  const getSeverityConfig = (severity) => {
+    const configs = {
+      'critical': { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200', badge: 'bg-red-500' },
+      'high': { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200', badge: 'bg-orange-500' },
+      'medium': { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200', badge: 'bg-amber-500' },
+      'low': { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200', badge: 'bg-blue-500' }
+    };
+    return configs[severity] || { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', badge: 'bg-slate-500' };
   };
 
   const getComplianceColor = (level) => {
-    switch(level) {
-      case 'Full': return 'bg-emerald-500';
-      case 'Partial': return 'bg-amber-500';
-      case 'None': return 'bg-red-500';
-      default: return 'bg-slate-500';
-    }
+    if (level === 'Full') return 'bg-emerald-500';
+    if (level === 'Partial') return 'bg-amber-500';
+    return 'bg-red-500';
   };
 
   if (loading) {
@@ -84,13 +80,12 @@ function Governance() {
   return (
     <Layout>
       <div className="space-y-8" data-testid="governance-page">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-purple-900 to-indigo-800 rounded-[50px] p-12 text-white relative overflow-hidden shadow-2xl border-b-8 border-purple-400">
+        <div className="bg-gradient-to-br from-purple-900 to-indigo-800 rounded-3xl p-12 text-white relative overflow-hidden shadow-2xl">
           <div className="relative z-10">
             <Badge className="bg-white/20 text-white border-white/30 mb-4 uppercase tracking-widest text-xs font-bold">
               Federated Computational Governance
             </Badge>
-            <h1 className="text-5xl font-black uppercase tracking-tighter mb-3 leading-none">Federated Governance</h1>
+            <h1 className="text-4xl font-black uppercase tracking-tighter mb-3">Federated Governance</h1>
             <p className="text-purple-200 font-medium text-lg max-w-2xl">
               Achieve interoperability through standardization, semantic mappings, and compliance 
               with organizational rules and industry regulations across the entire data mesh.
@@ -99,7 +94,6 @@ function Governance() {
           <div className="absolute top-0 right-0 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl"></div>
         </div>
 
-        {/* Governance Stats */}
         {dashboardStats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="border-l-4 border-l-blue-500">
@@ -157,7 +151,6 @@ function Governance() {
             <TabsTrigger value="policies" className="font-bold uppercase text-xs">Policies</TabsTrigger>
           </TabsList>
 
-          {/* Standards Tab */}
           <TabsContent value="standards" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {standards.map((standard) => (
@@ -182,7 +175,6 @@ function Governance() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-sm text-slate-600">{standard.description}</p>
-                    
                     <div>
                       <p className="text-xs font-bold text-slate-500 uppercase mb-2">Supported Domains</p>
                       <div className="flex flex-wrap gap-2">
@@ -193,7 +185,6 @@ function Governance() {
                         ))}
                       </div>
                     </div>
-
                     {standard.certification_date && (
                       <div className="flex items-center gap-2 text-sm text-slate-500 pt-2 border-t">
                         <Award className="h-4 w-4" />
@@ -206,7 +197,6 @@ function Governance() {
             </div>
           </TabsContent>
 
-          {/* Compliance Tab */}
           <TabsContent value="compliance" className="space-y-6">
             <Card>
               <CardHeader>
@@ -215,62 +205,49 @@ function Governance() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {complianceRules.map((rule) => (
-                    <div key={rule.id} className={`p-6 rounded-xl border ${getSeverityColor(rule.severity)}`}>
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            rule.severity === 'critical' ? 'bg-red-500 text-white' :
-                            rule.severity === 'high' ? 'bg-orange-500 text-white' :
-                            rule.severity === 'medium' ? 'bg-amber-500 text-white' :
-                            'bg-blue-500 text-white'
-                          }`}>
-                            <FileCheck className="h-5 w-5" />
+                  {complianceRules.map((rule) => {
+                    const config = getSeverityConfig(rule.severity);
+                    return (
+                      <div key={rule.id} className={`p-6 rounded-xl border ${config.bg} ${config.border}`}>
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${config.badge} text-white`}>
+                              <FileCheck className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-slate-900">{rule.rule_name}</h4>
+                              <p className="text-xs text-slate-500">Standard: {rule.standard}</p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-bold text-slate-900">{rule.rule_name}</h4>
-                            <p className="text-xs text-slate-500">Standard: {rule.standard}</p>
+                          <div className="flex items-center gap-2">
+                            <Badge className={`uppercase text-xs font-bold ${config.badge} text-white`}>
+                              {rule.severity}
+                            </Badge>
+                            <Badge variant={rule.status === 'active' ? 'default' : 'secondary'}>
+                              {rule.status}
+                            </Badge>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className={`uppercase text-xs font-bold ${
-                            rule.severity === 'critical' ? 'bg-red-500' :
-                            rule.severity === 'high' ? 'bg-orange-500' :
-                            rule.severity === 'medium' ? 'bg-amber-500' :
-                            'bg-blue-500'
-                          } text-white`}>
-                            {rule.severity}
-                          </Badge>
-                          <Badge variant={rule.status === 'active' ? 'default' : 'secondary'}>
-                            {rule.status}
-                          </Badge>
-                        </div>
-                      </div>
-                      
-                      <p className="text-sm text-slate-600 mb-4">{rule.description}</p>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-wrap gap-2">
+                        <p className="text-sm text-slate-600 mb-4">{rule.description}</p>
+                        <div className="flex flex-wrap gap-2 mb-4">
                           {rule.applicable_domains.map((domain, idx) => (
                             <Badge key={idx} variant="outline" className="capitalize text-xs">
                               {domain}
                             </Badge>
                           ))}
                         </div>
+                        <div className="p-3 bg-slate-900 rounded-lg">
+                          <p className="text-xs font-bold text-slate-400 uppercase mb-1">Validation Logic</p>
+                          <code className="text-xs text-cyan-400 font-mono">{rule.validation_logic}</code>
+                        </div>
                       </div>
-
-                      <div className="mt-4 p-3 bg-slate-900 rounded-lg">
-                        <p className="text-xs font-bold text-slate-400 uppercase mb-1">Validation Logic</p>
-                        <code className="text-xs text-cyan-400 font-mono">{rule.validation_logic}</code>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Mappings Tab */}
           <TabsContent value="mappings" className="space-y-6">
             <Card>
               <CardHeader>
@@ -309,7 +286,6 @@ function Governance() {
             </Card>
           </TabsContent>
 
-          {/* Policies Tab */}
           <TabsContent value="policies" className="space-y-6">
             <Card>
               <CardHeader>
@@ -334,7 +310,6 @@ function Governance() {
                             </div>
                           </div>
                         </div>
-                        
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="p-3 bg-blue-50 rounded-lg">
                             <p className="text-xs font-bold text-blue-500 uppercase mb-2">Allowed Domains</p>
@@ -381,7 +356,6 @@ function Governance() {
           </TabsContent>
         </Tabs>
 
-        {/* Federated Governance Principle Explanation */}
         <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white">
           <CardHeader>
             <CardTitle className="text-2xl font-black uppercase tracking-tighter">Federated Governance Principle</CardTitle>
