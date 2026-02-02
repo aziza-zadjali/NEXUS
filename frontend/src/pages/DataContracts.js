@@ -9,33 +9,39 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   FileText, CheckCircle2, AlertTriangle, XCircle, 
   Clock, Shield, ArrowRight, Activity, TrendingUp, TrendingDown,
-  Users, Database, Server, Code, Eye, Copy, Download,
-  DollarSign, Lock, FileCode, Zap, Target, Globe, BookOpen
+  Users, Database, Eye, Copy, Download,
+  DollarSign, Lock, Zap, Target, BookOpen
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = BACKEND_URL + '/api';
 
 // Contract Card Component
 function ContractCard({ contract, onView }) {
-  const statusColor = {
-    active: 'bg-emerald-500 text-white',
-    draft: 'bg-amber-500 text-white',
-    deprecated: 'bg-red-500 text-white'
-  }[contract.status] || 'bg-slate-500 text-white';
+  let statusColor = 'bg-slate-500 text-white';
+  if (contract.status === 'active') statusColor = 'bg-emerald-500 text-white';
+  if (contract.status === 'draft') statusColor = 'bg-amber-500 text-white';
+  if (contract.status === 'deprecated') statusColor = 'bg-red-500 text-white';
 
-  const domainColor = {
-    port: 'border-l-blue-500',
-    fleet: 'border-l-purple-500',
-    epc: 'border-l-green-500'
-  }[contract.dataset?.domain] || 'border-l-slate-500';
+  let domainColor = 'border-l-slate-500';
+  const domain = contract.dataset ? contract.dataset.domain : null;
+  if (domain === 'port') domainColor = 'border-l-blue-500';
+  if (domain === 'fleet') domainColor = 'border-l-purple-500';
+  if (domain === 'epc') domainColor = 'border-l-green-500';
 
-  const schemaCount = contract.schema_fields?.length || 0;
-  const consumerCount = contract.consumers?.length || 0;
+  const schemaCount = contract.schema_fields ? contract.schema_fields.length : 0;
+  const consumerCount = contract.consumers ? contract.consumers.length : 0;
+  const availability = contract.slo ? contract.slo.availability : 'N/A';
+  const freshness = contract.quality ? contract.quality.freshness_slo : 'N/A';
+  const retention = contract.terms ? contract.terms.retention_period : 'N/A';
+  const providerName = contract.provider ? contract.provider.name : 'Unknown';
+  const providerTeam = contract.provider ? contract.provider.team : '';
+  const description = contract.dataset ? contract.dataset.description : contract.description;
+  const domainLabel = contract.dataset ? contract.dataset.domain : 'unknown';
 
   return (
-    <Card className={`hover:shadow-lg transition-all border-l-4 ${domainColor}`}>
+    <Card className={'hover:shadow-lg transition-all border-l-4 ' + domainColor}>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
@@ -43,26 +49,24 @@ function ContractCard({ contract, onView }) {
               {contract.contract_name}
             </CardTitle>
             <CardDescription className="capitalize">
-              {contract.dataset?.domain} Domain • v{contract.version}
+              {domainLabel} Domain • v{contract.version}
             </CardDescription>
           </div>
           <Badge className={statusColor}>{contract.status}</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-slate-600 line-clamp-2">{contract.dataset?.description || contract.description}</p>
+        <p className="text-sm text-slate-600 line-clamp-2">{description}</p>
         
-        {/* Provider Info */}
         <div className="p-3 bg-slate-50 rounded-lg">
           <div className="flex items-center gap-2 mb-2">
             <Users className="h-4 w-4 text-slate-500" />
             <span className="text-xs font-bold text-slate-500 uppercase">Provider</span>
           </div>
-          <p className="font-medium text-sm">{contract.provider?.name}</p>
-          <p className="text-xs text-slate-500">{contract.provider?.team}</p>
+          <p className="font-medium text-sm">{providerName}</p>
+          <p className="text-xs text-slate-500">{providerTeam}</p>
         </div>
 
-        {/* Key Metrics */}
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="p-2 bg-blue-50 rounded-lg">
             <p className="text-lg font-black text-blue-900">{schemaCount}</p>
@@ -73,24 +77,23 @@ function ContractCard({ contract, onView }) {
             <p className="text-xs text-purple-600">Consumers</p>
           </div>
           <div className="p-2 bg-green-50 rounded-lg">
-            <p className="text-lg font-black text-green-900">{contract.slo?.availability}</p>
+            <p className="text-lg font-black text-green-900">{availability}</p>
             <p className="text-xs text-green-600">SLO</p>
           </div>
         </div>
 
-        {/* Quality & Freshness */}
         <div className="flex items-center gap-4 text-xs text-slate-500 pt-2 border-t">
           <div className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            <span>Freshness: {contract.quality?.freshness_slo}</span>
+            <span>Freshness: {freshness}</span>
           </div>
           <div className="flex items-center gap-1">
             <Shield className="h-3 w-3" />
-            <span>Retention: {contract.terms?.retention_period}</span>
+            <span>Retention: {retention}</span>
           </div>
         </div>
 
-        <Button variant="outline" className="w-full" onClick={() => onView(contract)}>
+        <Button variant="outline" className="w-full" onClick={function() { onView(contract); }}>
           <Eye className="h-4 w-4 mr-2" /> View Contract Details
         </Button>
       </CardContent>
@@ -101,6 +104,30 @@ function ContractCard({ contract, onView }) {
 // Schema Table Component
 function SchemaTable({ fields }) {
   if (!fields || fields.length === 0) return <p className="text-sm text-slate-500">No schema defined</p>;
+
+  const rows = [];
+  for (let i = 0; i < fields.length; i++) {
+    const field = fields[i];
+    const flags = [];
+    if (field.required) flags.push(<Badge key="req" className="bg-red-100 text-red-700 text-xs mr-1">Required</Badge>);
+    if (field.unique) flags.push(<Badge key="uniq" className="bg-blue-100 text-blue-700 text-xs mr-1">Unique</Badge>);
+    if (field.is_pii) flags.push(<Badge key="pii" className="bg-orange-100 text-orange-700 text-xs mr-1">PII</Badge>);
+    if (field.sensitive) flags.push(<Badge key="sens" className="bg-purple-100 text-purple-700 text-xs">Sensitive</Badge>);
+    
+    rows.push(
+      <tr key={i} className="border-b hover:bg-slate-50">
+        <td className="py-2 px-3">
+          <code className="text-blue-600 font-mono text-xs">{field.name}</code>
+          {field.business_term && <p className="text-xs text-slate-400 mt-1">{field.business_term}</p>}
+        </td>
+        <td className="py-2 px-3">
+          <Badge variant="outline" className="font-mono text-xs">{field.data_type}</Badge>
+        </td>
+        <td className="py-2 px-3 text-slate-600 text-xs">{field.description}</td>
+        <td className="py-2 px-3"><div className="flex flex-wrap gap-1">{flags}</div></td>
+      </tr>
+    );
+  }
 
   return (
     <div className="overflow-x-auto">
@@ -113,30 +140,7 @@ function SchemaTable({ fields }) {
             <th className="text-left py-2 px-3 font-bold">Flags</th>
           </tr>
         </thead>
-        <tbody>
-          {fields.map((field, idx) => (
-            <tr key={idx} className="border-b hover:bg-slate-50">
-              <td className="py-2 px-3">
-                <code className="text-blue-600 font-mono text-xs">{field.name}</code>
-                {field.business_term && (
-                  <p className="text-xs text-slate-400 mt-1">{field.business_term}</p>
-                )}
-              </td>
-              <td className="py-2 px-3">
-                <Badge variant="outline" className="font-mono text-xs">{field.data_type}</Badge>
-              </td>
-              <td className="py-2 px-3 text-slate-600 text-xs">{field.description}</td>
-              <td className="py-2 px-3">
-                <div className="flex flex-wrap gap-1">
-                  {field.required && <Badge className="bg-red-100 text-red-700 text-xs">Required</Badge>}
-                  {field.unique && <Badge className="bg-blue-100 text-blue-700 text-xs">Unique</Badge>}
-                  {field.is_pii && <Badge className="bg-orange-100 text-orange-700 text-xs">PII</Badge>}
-                  {field.sensitive && <Badge className="bg-purple-100 text-purple-700 text-xs">Sensitive</Badge>}
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+        <tbody>{rows}</tbody>
       </table>
     </div>
   );
@@ -145,6 +149,30 @@ function SchemaTable({ fields }) {
 // Quality Section Component
 function QualitySection({ quality }) {
   if (!quality) return <p className="text-sm text-slate-500">No quality attributes defined</p>;
+
+  const validityItems = [];
+  if (quality.validity_rules) {
+    for (let i = 0; i < quality.validity_rules.length; i++) {
+      validityItems.push(
+        <div key={i} className="flex items-start gap-2 p-2 bg-slate-50 rounded">
+          <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+          <span className="text-sm text-slate-600">{quality.validity_rules[i]}</span>
+        </div>
+      );
+    }
+  }
+
+  const checkItems = [];
+  if (quality.data_quality_checks) {
+    for (let i = 0; i < quality.data_quality_checks.length; i++) {
+      checkItems.push(
+        <div key={i} className="flex items-center gap-2 p-2 bg-blue-50 rounded">
+          <Zap className="h-4 w-4 text-blue-500" />
+          <span className="text-xs text-blue-700">{quality.data_quality_checks[i]}</span>
+        </div>
+      );
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -174,31 +202,17 @@ function QualitySection({ quality }) {
         </div>
       )}
 
-      {quality.validity_rules && quality.validity_rules.length > 0 && (
+      {validityItems.length > 0 && (
         <div>
           <h4 className="text-sm font-bold text-slate-700 mb-2">Validity Rules</h4>
-          <div className="space-y-1">
-            {quality.validity_rules.map((rule, idx) => (
-              <div key={idx} className="flex items-start gap-2 p-2 bg-slate-50 rounded">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                <span className="text-sm text-slate-600">{rule}</span>
-              </div>
-            ))}
-          </div>
+          <div className="space-y-1">{validityItems}</div>
         </div>
       )}
 
-      {quality.data_quality_checks && quality.data_quality_checks.length > 0 && (
+      {checkItems.length > 0 && (
         <div>
           <h4 className="text-sm font-bold text-slate-700 mb-2">Automated Quality Checks</h4>
-          <div className="grid grid-cols-2 gap-2">
-            {quality.data_quality_checks.map((check, idx) => (
-              <div key={idx} className="flex items-center gap-2 p-2 bg-blue-50 rounded">
-                <Zap className="h-4 w-4 text-blue-500" />
-                <span className="text-xs text-blue-700">{check}</span>
-              </div>
-            ))}
-          </div>
+          <div className="grid grid-cols-2 gap-2">{checkItems}</div>
         </div>
       )}
     </div>
@@ -274,6 +288,8 @@ function SLOSection({ slo }) {
 function BillingSection({ billing }) {
   if (!billing) return <p className="text-sm text-slate-500">No billing details defined</p>;
 
+  const pricingBadge = billing.pricing_model === 'free' ? 'bg-green-500' : 'bg-blue-500';
+
   return (
     <div className="space-y-4">
       <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200">
@@ -282,9 +298,7 @@ function BillingSection({ billing }) {
             <DollarSign className="h-5 w-5 text-green-600" />
             <span className="text-sm font-bold text-green-700">Pricing Model</span>
           </div>
-          <Badge className={billing.pricing_model === 'free' ? 'bg-green-500' : 'bg-blue-500'}>
-            {billing.pricing_model.toUpperCase()}
-          </Badge>
+          <Badge className={pricingBadge}>{billing.pricing_model.toUpperCase()}</Badge>
         </div>
         {billing.monthly_subscription && (
           <p className="text-2xl font-black text-green-800">{billing.monthly_subscription}/month</p>
@@ -323,6 +337,30 @@ function BillingSection({ billing }) {
 function TermsSection({ terms }) {
   if (!terms) return <p className="text-sm text-slate-500">No terms defined</p>;
 
+  const restrictionItems = [];
+  if (terms.usage_restrictions) {
+    for (let i = 0; i < terms.usage_restrictions.length; i++) {
+      restrictionItems.push(
+        <div key={i} className="flex items-start gap-2 p-2 bg-red-50 rounded">
+          <XCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+          <span className="text-xs text-red-700">{terms.usage_restrictions[i]}</span>
+        </div>
+      );
+    }
+  }
+
+  const purposeItems = [];
+  if (terms.allowed_purposes) {
+    for (let i = 0; i < terms.allowed_purposes.length; i++) {
+      purposeItems.push(
+        <div key={i} className="flex items-start gap-2 p-2 bg-green-50 rounded">
+          <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+          <span className="text-xs text-green-700">{terms.allowed_purposes[i]}</span>
+        </div>
+      );
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
@@ -330,27 +368,13 @@ function TermsSection({ terms }) {
           <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
             <Lock className="h-4 w-4" /> Usage Restrictions
           </h4>
-          <div className="space-y-2">
-            {terms.usage_restrictions?.map((restriction, idx) => (
-              <div key={idx} className="flex items-start gap-2 p-2 bg-red-50 rounded">
-                <XCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
-                <span className="text-xs text-red-700">{restriction}</span>
-              </div>
-            ))}
-          </div>
+          <div className="space-y-2">{restrictionItems}</div>
         </div>
         <div className="p-4 border rounded-xl">
           <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4" /> Allowed Purposes
           </h4>
-          <div className="space-y-2">
-            {terms.allowed_purposes?.map((purpose, idx) => (
-              <div key={idx} className="flex items-start gap-2 p-2 bg-green-50 rounded">
-                <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-                <span className="text-xs text-green-700">{purpose}</span>
-              </div>
-            ))}
-          </div>
+          <div className="space-y-2">{purposeItems}</div>
         </div>
       </div>
 
@@ -403,36 +427,43 @@ function TermsSection({ terms }) {
 function ConsumersSection({ consumers }) {
   if (!consumers || consumers.length === 0) return <p className="text-sm text-slate-500">No consumers registered</p>;
 
-  return (
-    <div className="space-y-3">
-      {consumers.map((consumer, idx) => (
-        <div key={idx} className="p-4 border rounded-xl hover:shadow-md transition-shadow">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h4 className="font-bold text-slate-900">{consumer.name}</h4>
-              <p className="text-sm text-slate-500">{consumer.team}</p>
-            </div>
-            <div className="flex gap-2">
-              <Badge variant="outline" className="capitalize">{consumer.domain}</Badge>
-              <Badge className={consumer.access_level === 'admin' ? 'bg-purple-500' : consumer.access_level === 'write' ? 'bg-blue-500' : 'bg-slate-500'}>
-                {consumer.access_level}
-              </Badge>
-            </div>
+  const items = [];
+  for (let i = 0; i < consumers.length; i++) {
+    const consumer = consumers[i];
+    const accessBadge = consumer.access_level === 'admin' ? 'bg-purple-500' : (consumer.access_level === 'write' ? 'bg-blue-500' : 'bg-slate-500');
+    
+    const useCaseBadges = [];
+    if (consumer.use_cases) {
+      for (let j = 0; j < consumer.use_cases.length; j++) {
+        useCaseBadges.push(
+          <Badge key={j} variant="outline" className="text-xs bg-slate-50">{consumer.use_cases[j]}</Badge>
+        );
+      }
+    }
+
+    items.push(
+      <div key={i} className="p-4 border rounded-xl hover:shadow-md transition-shadow">
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h4 className="font-bold text-slate-900">{consumer.name}</h4>
+            <p className="text-sm text-slate-500">{consumer.team}</p>
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-            <span>{consumer.email}</span>
-            <span>•</span>
-            <span>Approved: {consumer.approved_date}</span>
-          </div>
-          <div className="flex flex-wrap gap-1 mt-2">
-            {consumer.use_cases?.map((useCase, ucIdx) => (
-              <Badge key={ucIdx} variant="outline" className="text-xs bg-slate-50">{useCase}</Badge>
-            ))}
+          <div className="flex gap-2">
+            <Badge variant="outline" className="capitalize">{consumer.domain}</Badge>
+            <Badge className={accessBadge}>{consumer.access_level}</Badge>
           </div>
         </div>
-      ))}
-    </div>
-  );
+        <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
+          <span>{consumer.email}</span>
+          <span>•</span>
+          <span>Approved: {consumer.approved_date}</span>
+        </div>
+        <div className="flex flex-wrap gap-1 mt-2">{useCaseBadges}</div>
+      </div>
+    );
+  }
+
+  return <div className="space-y-3">{items}</div>;
 }
 
 // YAML Preview Component
@@ -440,12 +471,12 @@ function YAMLPreview({ contractId }) {
   const [yaml, setYaml] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchYaml = async () => {
+  useEffect(function() {
+    const fetchYaml = async function() {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`${API}/contracts/${contractId}/yaml`, {
-          headers: { Authorization: `Bearer ${token}` }
+        const response = await axios.get(API + '/contracts/' + contractId + '/yaml', {
+          headers: { Authorization: 'Bearer ' + token }
         });
         setYaml(response.data.yaml);
         setLoading(false);
@@ -457,17 +488,17 @@ function YAMLPreview({ contractId }) {
     fetchYaml();
   }, [contractId]);
 
-  const copyToClipboard = () => {
+  const copyToClipboard = function() {
     navigator.clipboard.writeText(yaml);
     toast.success('YAML copied to clipboard');
   };
 
-  const downloadYaml = () => {
+  const downloadYaml = function() {
     const blob = new Blob([yaml], { type: 'text/yaml' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `data-contract-${contractId}.yaml`;
+    a.download = 'data-contract-' + contractId + '.yaml';
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -501,20 +532,25 @@ function YAMLPreview({ contractId }) {
 function ContractDetailModal({ contract, open, onClose }) {
   if (!contract) return null;
 
+  const statusBadge = contract.status === 'active' ? 'bg-emerald-500' : (contract.status === 'draft' ? 'bg-amber-500' : 'bg-red-500');
+  const providerName = contract.provider ? contract.provider.name : 'Unknown';
+  const providerTeam = contract.provider ? contract.provider.team : '';
+  const description = contract.dataset ? contract.dataset.description : contract.description;
+  const domainLabel = contract.dataset ? contract.dataset.domain : 'unknown';
+  const outputPort = contract.provider ? contract.provider.output_port : '';
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div>
-              <Badge className={contract.status === 'active' ? 'bg-emerald-500' : contract.status === 'draft' ? 'bg-amber-500' : 'bg-red-500'}>
-                {contract.status}
-              </Badge>
+              <Badge className={statusBadge}>{contract.status}</Badge>
               <DialogTitle className="text-2xl font-black uppercase tracking-tight mt-2">
                 {contract.contract_name}
               </DialogTitle>
               <p className="text-slate-500 mt-1">
-                Version {contract.version} • {contract.dataset?.domain} Domain
+                Version {contract.version} • {domainLabel} Domain
               </p>
             </div>
           </div>
@@ -524,13 +560,13 @@ function ContractDetailModal({ contract, open, onClose }) {
           <div className="flex items-center gap-4 mb-3">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              <span className="font-bold">{contract.provider?.name}</span>
+              <span className="font-bold">{providerName}</span>
             </div>
-            <Badge className="bg-white/20 text-white">{contract.provider?.team}</Badge>
+            <Badge className="bg-white/20 text-white">{providerTeam}</Badge>
           </div>
-          <p className="text-sm text-slate-300">{contract.dataset?.description || contract.description}</p>
+          <p className="text-sm text-slate-300">{description}</p>
           <div className="mt-3">
-            <code className="text-xs bg-white/10 px-2 py-1 rounded">{contract.provider?.output_port}</code>
+            <code className="text-xs bg-white/10 px-2 py-1 rounded">{outputPort}</code>
           </div>
         </div>
 
@@ -589,28 +625,28 @@ function DataContracts() {
   const [selectedContract, setSelectedContract] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  useEffect(() => {
+  useEffect(function() {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async function() {
     try {
       const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
+      const headers = { Authorization: 'Bearer ' + token };
       
-      const [contractsRes, metricsRes, lineagesRes, productsRes, statsRes] = await Promise.all([
-        axios.get(`${API}/contracts`, { headers }),
-        axios.get(`${API}/quality/metrics`, { headers }),
-        axios.get(`${API}/lineage`, { headers }),
-        axios.get(`${API}/catalog/products`, { headers }),
-        axios.get(`${API}/contracts/stats/summary`, { headers })
+      const results = await Promise.all([
+        axios.get(API + '/contracts', { headers }),
+        axios.get(API + '/quality/metrics', { headers }),
+        axios.get(API + '/lineage', { headers }),
+        axios.get(API + '/catalog/products', { headers }),
+        axios.get(API + '/contracts/stats/summary', { headers })
       ]);
       
-      setContracts(contractsRes.data);
-      setMetrics(metricsRes.data);
-      setLineages(lineagesRes.data);
-      setProducts(productsRes.data);
-      setStats(statsRes.data);
+      setContracts(results[0].data);
+      setMetrics(results[1].data);
+      setLineages(results[2].data);
+      setProducts(results[3].data);
+      setStats(results[4].data);
       setLoading(false);
     } catch (error) {
       toast.error('Failed to fetch data');
@@ -618,21 +654,21 @@ function DataContracts() {
     }
   };
 
-  const getProductName = (productId) => {
-    const product = products.find(p => p.id === productId);
-    return product ? product.name : productId;
-  };
-
-  const getStatusIcon = (status) => {
-    switch(status) {
-      case 'healthy': return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
-      case 'warning': return <AlertTriangle className="h-5 w-5 text-amber-500" />;
-      case 'critical': return <XCircle className="h-5 w-5 text-red-500" />;
-      default: return <Activity className="h-5 w-5 text-slate-400" />;
+  const getProductName = function(productId) {
+    for (let i = 0; i < products.length; i++) {
+      if (products[i].id === productId) return products[i].name;
     }
+    return productId;
   };
 
-  const handleViewContract = (contract) => {
+  const getStatusIcon = function(status) {
+    if (status === 'healthy') return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
+    if (status === 'warning') return <AlertTriangle className="h-5 w-5 text-amber-500" />;
+    if (status === 'critical') return <XCircle className="h-5 w-5 text-red-500" />;
+    return <Activity className="h-5 w-5 text-slate-400" />;
+  };
+
+  const handleViewContract = function(contract) {
     setSelectedContract(contract);
     setDialogOpen(true);
   };
@@ -645,6 +681,90 @@ function DataContracts() {
         </div>
       </Layout>
     );
+  }
+
+  // Build contract cards
+  const contractCards = [];
+  for (let i = 0; i < contracts.length; i++) {
+    contractCards.push(
+      <ContractCard key={contracts[i].id} contract={contracts[i]} onView={handleViewContract} />
+    );
+  }
+
+  // Build metric rows
+  const metricRows = [];
+  for (let i = 0; i < metrics.length; i++) {
+    const metric = metrics[i];
+    const isHealthy = metric.value >= metric.threshold;
+    metricRows.push(
+      <div key={metric.id} className="flex items-center justify-between p-4 rounded-xl border hover:bg-slate-50 transition-colors">
+        <div className="flex items-center gap-4">
+          {getStatusIcon(metric.status)}
+          <div>
+            <p className="font-bold text-slate-900">{getProductName(metric.data_product_id)}</p>
+            <p className="text-xs text-slate-500 capitalize">{metric.metric_type}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-6">
+          <div className="text-right">
+            <p className="text-sm font-bold text-slate-500">Value</p>
+            <p className={'text-lg font-black ' + (isHealthy ? 'text-emerald-600' : 'text-amber-600')}>
+              {metric.value}%
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-bold text-slate-500">Threshold</p>
+            <p className="text-lg font-black text-slate-700">{metric.threshold}%</p>
+          </div>
+          <div className="flex items-center gap-1">
+            {isHealthy ? (
+              <TrendingUp className="h-5 w-5 text-emerald-500" />
+            ) : (
+              <TrendingDown className="h-5 w-5 text-amber-500" />
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Build lineage rows
+  const lineageRows = [];
+  for (let i = 0; i < lineages.length; i++) {
+    const lineage = lineages[i];
+    lineageRows.push(
+      <div key={lineage.id} className="p-6 rounded-xl border bg-gradient-to-r from-slate-50 to-white">
+        <div className="flex items-center gap-4">
+          <div className="flex-1 p-4 bg-blue-50 rounded-xl border border-blue-200">
+            <p className="text-xs font-bold text-blue-500 uppercase mb-1">Source</p>
+            <p className="font-bold text-blue-900">{getProductName(lineage.source_product_id)}</p>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <Badge className="bg-slate-900 text-white uppercase text-xs font-bold">
+              {lineage.relationship_type}
+            </Badge>
+            <ArrowRight className="h-6 w-6 text-slate-400" />
+          </div>
+          <div className="flex-1 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+            <p className="text-xs font-bold text-emerald-500 uppercase mb-1">Target</p>
+            <p className="font-bold text-emerald-900">{getProductName(lineage.target_product_id)}</p>
+          </div>
+        </div>
+        <p className="mt-4 text-sm text-slate-600 italic">
+          {lineage.transformation_description}
+        </p>
+      </div>
+    );
+  }
+
+  // Count metrics by status
+  let healthyCount = 0;
+  let warningCount = 0;
+  let criticalCount = 0;
+  for (let i = 0; i < metrics.length; i++) {
+    if (metrics[i].status === 'healthy') healthyCount++;
+    else if (metrics[i].status === 'warning') warningCount++;
+    else if (metrics[i].status === 'critical') criticalCount++;
   }
 
   return (
@@ -736,13 +856,7 @@ function DataContracts() {
           {/* Contracts Tab */}
           <TabsContent value="contracts" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {contracts.map((contract) => (
-                <ContractCard 
-                  key={contract.id} 
-                  contract={contract} 
-                  onView={handleViewContract}
-                />
-              ))}
+              {contractCards}
             </div>
           </TabsContent>
 
@@ -755,9 +869,7 @@ function DataContracts() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs font-bold text-slate-500 uppercase">Healthy</p>
-                      <p className="text-3xl font-black text-emerald-600">
-                        {metrics.filter(m => m.status === 'healthy').length}
-                      </p>
+                      <p className="text-3xl font-black text-emerald-600">{healthyCount}</p>
                     </div>
                     <CheckCircle2 className="h-8 w-8 text-emerald-500" />
                   </div>
@@ -768,9 +880,7 @@ function DataContracts() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs font-bold text-slate-500 uppercase">Warning</p>
-                      <p className="text-3xl font-black text-amber-600">
-                        {metrics.filter(m => m.status === 'warning').length}
-                      </p>
+                      <p className="text-3xl font-black text-amber-600">{warningCount}</p>
                     </div>
                     <AlertTriangle className="h-8 w-8 text-amber-500" />
                   </div>
@@ -781,9 +891,7 @@ function DataContracts() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs font-bold text-slate-500 uppercase">Critical</p>
-                      <p className="text-3xl font-black text-red-600">
-                        {metrics.filter(m => m.status === 'critical').length}
-                      </p>
+                      <p className="text-3xl font-black text-red-600">{criticalCount}</p>
                     </div>
                     <XCircle className="h-8 w-8 text-red-500" />
                   </div>
@@ -809,40 +917,7 @@ function DataContracts() {
                 <CardDescription>Real-time quality measurements for all data products</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {metrics.map((metric) => (
-                    <div key={metric.id} className="flex items-center justify-between p-4 rounded-xl border hover:bg-slate-50 transition-colors">
-                      <div className="flex items-center gap-4">
-                        {getStatusIcon(metric.status)}
-                        <div>
-                          <p className="font-bold text-slate-900">{getProductName(metric.data_product_id)}</p>
-                          <p className="text-xs text-slate-500 capitalize">{metric.metric_type}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-slate-500">Value</p>
-                          <p className={`text-lg font-black ${
-                            metric.value >= metric.threshold ? 'text-emerald-600' : 'text-amber-600'
-                          }`}>
-                            {metric.value}%
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-slate-500">Threshold</p>
-                          <p className="text-lg font-black text-slate-700">{metric.threshold}%</p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {metric.value >= metric.threshold ? (
-                            <TrendingUp className="h-5 w-5 text-emerald-500" />
-                          ) : (
-                            <TrendingDown className="h-5 w-5 text-amber-500" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <div className="space-y-3">{metricRows}</div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -855,31 +930,7 @@ function DataContracts() {
                 <CardDescription>Understand how data flows between products</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {lineages.map((lineage) => (
-                    <div key={lineage.id} className="p-6 rounded-xl border bg-gradient-to-r from-slate-50 to-white">
-                      <div className="flex items-center gap-4">
-                        <div className="flex-1 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                          <p className="text-xs font-bold text-blue-500 uppercase mb-1">Source</p>
-                          <p className="font-bold text-blue-900">{getProductName(lineage.source_product_id)}</p>
-                        </div>
-                        <div className="flex flex-col items-center gap-1">
-                          <Badge className="bg-slate-900 text-white uppercase text-xs font-bold">
-                            {lineage.relationship_type}
-                          </Badge>
-                          <ArrowRight className="h-6 w-6 text-slate-400" />
-                        </div>
-                        <div className="flex-1 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
-                          <p className="text-xs font-bold text-emerald-500 uppercase mb-1">Target</p>
-                          <p className="font-bold text-emerald-900">{getProductName(lineage.target_product_id)}</p>
-                        </div>
-                      </div>
-                      <p className="mt-4 text-sm text-slate-600 italic">
-                        {lineage.transformation_description}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                <div className="space-y-4">{lineageRows}</div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -900,15 +951,15 @@ function DataContracts() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
               <div className="p-4 bg-white/10 rounded-xl">
-                <h4 className="font-bold text-white mb-2">Provider & Output Port</h4>
+                <h4 className="font-bold text-white mb-2">Provider &amp; Output Port</h4>
                 <p className="text-sm text-slate-300">Owner information and the output port to access data</p>
               </div>
               <div className="p-4 bg-white/10 rounded-xl">
-                <h4 className="font-bold text-white mb-2">Schema & Semantics</h4>
+                <h4 className="font-bold text-white mb-2">Schema &amp; Semantics</h4>
                 <p className="text-sm text-slate-300">Data attributes with descriptions, formats, and business terms</p>
               </div>
               <div className="p-4 bg-white/10 rounded-xl">
-                <h4 className="font-bold text-white mb-2">Quality & SLOs</h4>
+                <h4 className="font-bold text-white mb-2">Quality &amp; SLOs</h4>
                 <p className="text-sm text-slate-300">Freshness, accuracy, availability, and support commitments</p>
               </div>
             </div>
@@ -926,7 +977,7 @@ function DataContracts() {
         <ContractDetailModal 
           contract={selectedContract} 
           open={dialogOpen} 
-          onClose={() => setDialogOpen(false)} 
+          onClose={function() { setDialogOpen(false); }} 
         />
       </div>
     </Layout>
