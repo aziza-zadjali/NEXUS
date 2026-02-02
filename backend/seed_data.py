@@ -25,6 +25,10 @@ async def seed_database():
     await db.semantic_mappings.delete_many({})
     await db.access_policies.delete_many({})
     await db.event_logs.delete_many({})
+    await db.logistics_routes.delete_many({})
+    await db.logistics_permits.delete_many({})
+    await db.weather_forecasts.delete_many({})
+    await db.assembly_areas.delete_many({})
     
     users = [
         {
