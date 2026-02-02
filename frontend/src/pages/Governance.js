@@ -3,7 +3,6 @@ import axios from 'axios';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, ArrowRightLeft, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
