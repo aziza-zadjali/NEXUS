@@ -62,10 +62,10 @@ function PlatformCapabilities() {
 
   let maxDomainProducts = 1;
   if (stats && stats.products_by_domain) {
-    const vals = Object.values(stats.products_by_domain);
-    for (let i = 0; i < vals.length; i++) {
-      if (vals[i] > maxDomainProducts) maxDomainProducts = vals[i];
-    }
+    if (stats.products_by_domain.port > maxDomainProducts) maxDomainProducts = stats.products_by_domain.port;
+    if (stats.products_by_domain.fleet > maxDomainProducts) maxDomainProducts = stats.products_by_domain.fleet;
+    if (stats.products_by_domain.epc > maxDomainProducts) maxDomainProducts = stats.products_by_domain.epc;
+    if (stats.products_by_domain.logistics > maxDomainProducts) maxDomainProducts = stats.products_by_domain.logistics;
   }
 
   return (
