@@ -69,6 +69,7 @@ function App() {
             <Route path="/contracts" element={<ProtectedRoute><DataContracts /></ProtectedRoute>} />
             <Route path="/platform" element={<ProtectedRoute><PlatformCapabilities /></ProtectedRoute>} />
             <Route path="/canvas" element={<ProtectedRoute><DataProductCanvas /></ProtectedRoute>} />
+            <Route path="/canvas/create" element={<ProtectedRoute><CreateCanvas /></ProtectedRoute>} />
           </Routes>
         </BrowserRouter>
         <Toaster position="top-right" />
