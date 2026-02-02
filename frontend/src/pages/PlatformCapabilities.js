@@ -56,12 +56,16 @@ function PlatformCapabilities() {
   }
 
   let totalUsage = 0;
-  capabilities.forEach(c => { totalUsage += c.usage_count; });
+  for (let i = 0; i < capabilities.length; i++) {
+    totalUsage = totalUsage + capabilities[i].usage_count;
+  }
 
   let maxDomainProducts = 1;
   if (stats && stats.products_by_domain) {
     const vals = Object.values(stats.products_by_domain);
-    vals.forEach(v => { if (v > maxDomainProducts) maxDomainProducts = v; });
+    for (let i = 0; i < vals.length; i++) {
+      if (vals[i] > maxDomainProducts) maxDomainProducts = vals[i];
+    }
   }
 
   return (
