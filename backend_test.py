@@ -407,7 +407,17 @@ def main():
         ("EPC Sites", tester.test_epc_sites),
         ("Data Catalog", tester.test_data_catalog),
         ("Governance", tester.test_governance),
-        ("Events", tester.test_events)
+        ("Events", tester.test_events),
+        # New Data Mesh Enhancement Tests
+        ("Domain Journey APIs", tester.test_domain_journey_apis),
+        ("Data Contracts APIs", tester.test_data_contracts_apis),
+        ("Quality Metrics APIs", tester.test_quality_metrics_apis),
+        ("Data Lineage APIs", tester.test_data_lineage_apis),
+        ("Platform Capabilities APIs", tester.test_platform_capabilities_apis),
+        ("Platform Stats APIs", tester.test_platform_stats_apis),
+        ("Governance Compliance APIs", tester.test_governance_compliance_apis),
+        ("Governance Standards APIs", tester.test_governance_standards_apis),
+        ("Governance Dashboard APIs", tester.test_governance_dashboard_apis)
     ]
     
     for test_name, test_func in tests:
