@@ -99,6 +99,129 @@ class DataProduct(BaseModel):
     tags: List[str]
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+# ============================================
+# DATA PRODUCT CANVAS - Full Implementation
+# ============================================
+
+class OutputPort(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    format: str  # S3, Parquet, Delta, topic, schema, table, dashboard
+    protocol: str  # REST, gRPC, SQL, Stream
+    location: str  # URL or path
+    description: str
+
+class InputPort(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    source_type: str  # operational_system, data_product
+    source_name: str
+    source_domain: str
+    format: str
+    protocol: str
+    description: str
+
+class DataModelField(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str
+    data_type: str
+    description: str
+    constraints: List[str]
+    is_pii: bool = False
+    is_business_key: bool = False
+    is_join_key: bool = False
+
+class QualityCheck(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    check_name: str
+    check_type: str  # uniqueness, consistency, freshness, completeness, validity
+    expression: str
+    threshold: Optional[float] = None
+    description: str
+
+class SLADefinition(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    availability: str
+    support_hours: str
+    retention_period: str
+    backup_frequency: str
+    response_time: str
+
+class SecurityDefinition(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    access_level: str  # public, internal, restricted, confidential
+    approval_required: bool
+    allowed_roles: List[str]
+    allowed_domains: List[str]
+    pii_handling: str
+
+class DataProductArchitecture(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    processing_type: str  # streaming, batch, hybrid
+    framework: str  # dbt, Databricks, Spark, Java
+    storage_type: str  # tables, files, topic
+    query_engine: str  # SQL, Python, Notebook
+    transformation_steps: List[str]
+    scheduling_tool: str  # CI/CD, Airflow, Soda
+    monitoring_tool: str
+    estimated_cost: Optional[str] = None
+
+class UseCase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str
+    description: str
+    business_objective: str
+    success_metrics: List[str]
+
+class Consumer(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str
+    domain: str
+    role: str
+    use_cases: List[str]
+
+class DataProductCanvas(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    
+    # Basic Info
+    name: str
+    domain: str
+    owner_name: str
+    owner_email: str
+    date: str
+    version: str
+    description: str
+    
+    # Classification
+    classification: str  # source-aligned, aggregate, consumer-aligned
+    
+    # Consumers and Use Cases
+    consumers: List[Consumer]
+    use_cases: List[UseCase]
+    
+    # Data Contract
+    output_ports: List[OutputPort]
+    terms: str
+    data_model: List[DataModelField]
+    quality_checks: List[QualityCheck]
+    sla: SLADefinition
+    security: SecurityDefinition
+    
+    # Sources
+    input_ports: List[InputPort]
+    
+    # Architecture
+    architecture: DataProductArchitecture
+    
+    # Ubiquitous Language
+    ubiquitous_language: Dict[str, str]
+    
+    # Metadata
+    status: str = "draft"  # draft, active, deprecated
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = None
+    follow_up_actions: List[str] = []
+    follow_up_date: Optional[str] = None
+
 class SemanticMapping(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
