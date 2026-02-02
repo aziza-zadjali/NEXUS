@@ -528,6 +528,128 @@ async def create_data_product(product_data: DataProduct, current_user: User = De
     await db.data_catalog.insert_one(doc)
     return product_data
 
+# ============================================
+# DATA PRODUCT CANVAS APIs
+# ============================================
+
+@api_router.get("/canvas", response_model=List[DataProductCanvas])
+async def get_all_canvases(current_user: User = Depends(get_current_user)):
+    """Get all data product canvases"""
+    canvases = await db.data_product_canvases.find({}, {"_id": 0}).to_list(100)
+    for canvas in canvases:
+        if isinstance(canvas.get('created_at'), str):
+            canvas['created_at'] = datetime.fromisoformat(canvas['created_at'])
+        if canvas.get('updated_at') and isinstance(canvas.get('updated_at'), str):
+            canvas['updated_at'] = datetime.fromisoformat(canvas['updated_at'])
+    return canvases
+
+@api_router.get("/canvas/{canvas_id}")
+async def get_canvas(canvas_id: str, current_user: User = Depends(get_current_user)):
+    """Get a specific data product canvas by ID"""
+    canvas = await db.data_product_canvases.find_one({"id": canvas_id}, {"_id": 0})
+    if not canvas:
+        raise HTTPException(status_code=404, detail="Canvas not found")
+    if isinstance(canvas.get('created_at'), str):
+        canvas['created_at'] = datetime.fromisoformat(canvas['created_at'])
+    if canvas.get('updated_at') and isinstance(canvas.get('updated_at'), str):
+        canvas['updated_at'] = datetime.fromisoformat(canvas['updated_at'])
+    return canvas
+
+@api_router.post("/canvas", response_model=DataProductCanvas)
+async def create_canvas(canvas_data: DataProductCanvas, current_user: User = Depends(get_current_user)):
+    """Create a new data product canvas"""
+    doc = canvas_data.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    if doc.get('updated_at'):
+        doc['updated_at'] = doc['updated_at'].isoformat()
+    await db.data_product_canvases.insert_one(doc)
+    
+    await log_event("canvas_created", canvas_data.domain, canvas_data.id,
+                    f"Data Product Canvas '{canvas_data.name}' created",
+                    ["notify_governance", "update_catalog"])
+    
+    return canvas_data
+
+@api_router.put("/canvas/{canvas_id}")
+async def update_canvas(canvas_id: str, canvas_data: DataProductCanvas, current_user: User = Depends(get_current_user)):
+    """Update an existing data product canvas"""
+    existing = await db.data_product_canvases.find_one({"id": canvas_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Canvas not found")
+    
+    doc = canvas_data.model_dump()
+    doc['id'] = canvas_id
+    doc['updated_at'] = datetime.now(timezone.utc).isoformat()
+    doc['created_at'] = existing.get('created_at', datetime.now(timezone.utc).isoformat())
+    
+    await db.data_product_canvases.replace_one({"id": canvas_id}, doc)
+    
+    await log_event("canvas_updated", canvas_data.domain, canvas_id,
+                    f"Data Product Canvas '{canvas_data.name}' updated to v{canvas_data.version}",
+                    ["notify_consumers", "review_changes"])
+    
+    return {"message": "Canvas updated successfully", "id": canvas_id}
+
+@api_router.delete("/canvas/{canvas_id}")
+async def delete_canvas(canvas_id: str, current_user: User = Depends(get_current_user)):
+    """Delete a data product canvas"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.data_product_canvases.delete_one({"id": canvas_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Canvas not found")
+    
+    return {"message": "Canvas deleted successfully"}
+
+@api_router.get("/canvas/domain/{domain_name}")
+async def get_canvases_by_domain(domain_name: str, current_user: User = Depends(get_current_user)):
+    """Get all canvases for a specific domain"""
+    canvases = await db.data_product_canvases.find({"domain": domain_name}, {"_id": 0}).to_list(100)
+    for canvas in canvases:
+        if isinstance(canvas.get('created_at'), str):
+            canvas['created_at'] = datetime.fromisoformat(canvas['created_at'])
+    return canvases
+
+@api_router.get("/canvas/stats")
+async def get_canvas_stats(current_user: User = Depends(get_current_user)):
+    """Get statistics about data product canvases"""
+    total = await db.data_product_canvases.count_documents({})
+    active = await db.data_product_canvases.count_documents({"status": "active"})
+    draft = await db.data_product_canvases.count_documents({"status": "draft"})
+    deprecated = await db.data_product_canvases.count_documents({"status": "deprecated"})
+    
+    # Count by classification
+    source_aligned = await db.data_product_canvases.count_documents({"classification": "source-aligned"})
+    aggregate = await db.data_product_canvases.count_documents({"classification": "aggregate"})
+    consumer_aligned = await db.data_product_canvases.count_documents({"classification": "consumer-aligned"})
+    
+    # Count by domain
+    port_canvases = await db.data_product_canvases.count_documents({"domain": "port"})
+    fleet_canvases = await db.data_product_canvases.count_documents({"domain": "fleet"})
+    epc_canvases = await db.data_product_canvases.count_documents({"domain": "epc"})
+    logistics_canvases = await db.data_product_canvases.count_documents({"domain": "logistics"})
+    
+    return {
+        "total": total,
+        "by_status": {
+            "active": active,
+            "draft": draft,
+            "deprecated": deprecated
+        },
+        "by_classification": {
+            "source_aligned": source_aligned,
+            "aggregate": aggregate,
+            "consumer_aligned": consumer_aligned
+        },
+        "by_domain": {
+            "port": port_canvases,
+            "fleet": fleet_canvases,
+            "epc": epc_canvases,
+            "logistics": logistics_canvases
+        }
+    }
+
 @api_router.get("/governance/mappings", response_model=List[SemanticMapping])
 async def get_mappings(current_user: User = Depends(get_current_user)):
     mappings = await db.semantic_mappings.find({}, {"_id": 0}).to_list(100)
