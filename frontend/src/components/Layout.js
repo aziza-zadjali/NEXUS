@@ -69,8 +69,7 @@ function Layout({ children }) {
                 <button
                   key={item.path}
                   onClick={() => navigate(item.path)}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black uppercase whitespace-nowrap transition-all tracking-wider $
-{
+                  className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black uppercase whitespace-nowrap transition-all tracking-wider ${
                     isActive
                       ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20'
                       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
