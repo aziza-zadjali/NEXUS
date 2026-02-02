@@ -16,6 +16,30 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = BACKEND_URL + '/api';
 
+function UbiquitousLanguageList({ language }) {
+  if (!language) return <p className="text-sm text-slate-500">No terminology defined</p>;
+  
+  const terms = [];
+  for (const key in language) {
+    if (language.hasOwnProperty(key)) {
+      terms.push({ term: key, definition: language[key] });
+    }
+  }
+  
+  return (
+    <div className="space-y-3">
+      {terms.map(function(item, idx) {
+        return (
+          <div key={idx} className="p-4 border rounded-lg">
+            <dt className="font-bold text-slate-900">{item.term}</dt>
+            <dd className="text-sm text-slate-600 mt-1">{item.definition}</dd>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function CanvasCard({ canvas, onView }) {
   const getClassificationColor = (classification) => {
     if (classification === 'source-aligned') return 'bg-blue-100 text-blue-700';
