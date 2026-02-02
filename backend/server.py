@@ -126,6 +126,55 @@ class EventLog(BaseModel):
     triggered_actions: List[str]
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class Route(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    route_name: str
+    origin: str
+    destination: str
+    transport_mode: str
+    distance_km: float
+    estimated_duration_hours: float
+    road_restrictions: List[str]
+    status: str
+    last_updated: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class Permit(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    permit_number: str
+    permit_type: str
+    shipment_id: str
+    issuing_authority: str
+    status: str
+    requested_date: str
+    approved_date: Optional[str] = None
+    expiry_date: Optional[str] = None
+    restrictions: List[str]
+
+class WeatherForecast(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    location: str
+    forecast_date: str
+    temperature_celsius: float
+    wind_speed_kmh: float
+    weather_condition: str
+    visibility_km: float
+    safe_for_transport: bool
+
+class AssemblyArea(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    area_name: str
+    area_type: str
+    location: str
+    capacity: int
+    current_occupancy: int
+    available_space: int
+    status: str
+    components_stored: List[str]
+
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
