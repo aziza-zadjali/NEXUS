@@ -63,6 +63,9 @@ function App() {
             <Route path="/domain/fleet" element={<ProtectedRoute><DomainFleet /></ProtectedRoute>} />
             <Route path="/domain/epc" element={<ProtectedRoute><DomainEPC /></ProtectedRoute>} />
             <Route path="/governance" element={<ProtectedRoute><Governance /></ProtectedRoute>} />
+            <Route path="/domain-journey" element={<ProtectedRoute><DomainJourney /></ProtectedRoute>} />
+            <Route path="/contracts" element={<ProtectedRoute><DataContracts /></ProtectedRoute>} />
+            <Route path="/platform" element={<ProtectedRoute><PlatformCapabilities /></ProtectedRoute>} />
           </Routes>
         </BrowserRouter>
         <Toaster position="top-right" />
