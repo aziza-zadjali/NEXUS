@@ -314,10 +314,16 @@ function Governance() {
                           <div className="p-3 bg-emerald-50 rounded-lg">
                             <p className="text-xs font-bold text-emerald-500 uppercase mb-2">Visible Fields</p>
                             <div className="flex flex-wrap gap-1">
-                              {p.data_fields_visible.slice(0, 3).map((field, idx) => (
-                                <Badge key={idx} variant="outline" className="text-xs font-mono">{field}</Badge>
-                              ))}
-                              {p.data_fields_visible.length > 3 && (
+                              {p.data_fields_visible && p.data_fields_visible[0] && (
+                                <Badge variant="outline" className="text-xs font-mono">{p.data_fields_visible[0]}</Badge>
+                              )}
+                              {p.data_fields_visible && p.data_fields_visible[1] && (
+                                <Badge variant="outline" className="text-xs font-mono">{p.data_fields_visible[1]}</Badge>
+                              )}
+                              {p.data_fields_visible && p.data_fields_visible[2] && (
+                                <Badge variant="outline" className="text-xs font-mono">{p.data_fields_visible[2]}</Badge>
+                              )}
+                              {p.data_fields_visible && p.data_fields_visible.length > 3 && (
                                 <Badge variant="outline" className="text-xs">+{p.data_fields_visible.length - 3}</Badge>
                               )}
                             </div>
