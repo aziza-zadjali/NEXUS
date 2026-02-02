@@ -336,6 +336,42 @@ async def seed_database():
             "description": "Site Duqm Hydrogen Hub A ready for component delivery",
             "triggered_actions": ["notify_fleet", "enable_shipping"],
             "timestamp": "2025-01-15T11:30:00Z"
+        },
+        {
+            "id": "e4",
+            "event_type": "permit_requested",
+            "domain": "logistics",
+            "resource_id": "permit2",
+            "description": "Permit TRP-2025-002 requested for oversized turbine blade transport",
+            "triggered_actions": ["notify_authority", "track_status"],
+            "timestamp": "2025-01-14T09:00:00Z"
+        },
+        {
+            "id": "e5",
+            "event_type": "route_created",
+            "domain": "logistics",
+            "resource_id": "route3",
+            "description": "New route planned: Hub B Coastal Route with bridge clearance restrictions",
+            "triggered_actions": ["update_permits", "notify_fleet"],
+            "timestamp": "2025-01-15T08:00:00Z"
+        },
+        {
+            "id": "e6",
+            "event_type": "vessel_update",
+            "domain": "port",
+            "resource_id": "v3",
+            "description": "Vessel Test Vessel status: approaching",
+            "triggered_actions": ["prepare_berth", "customs_alert"],
+            "timestamp": "2025-01-15T07:00:00Z"
+        },
+        {
+            "id": "e7",
+            "event_type": "shipment_update",
+            "domain": "fleet",
+            "resource_id": "s3",
+            "description": "Shipment SHIP-081933 status: pending",
+            "triggered_actions": ["check_permits", "weather_check"],
+            "timestamp": "2025-01-14T16:00:00Z"
         }
     ]
     await db.event_logs.insert_many(events)
