@@ -576,6 +576,210 @@ async def create_assembly_area(area_data: AssemblyArea, current_user: User = Dep
     
     return area_data
 
+# ============================================
+# DOMAIN OWNERSHIP PRINCIPLE - Domain Journey APIs
+# ============================================
+
+@api_router.get("/domains/journey", response_model=List[DomainJourney])
+async def get_domain_journeys(current_user: User = Depends(get_current_user)):
+    """Get maturity journey for all domains"""
+    journeys = await db.domain_journeys.find({}, {"_id": 0}).to_list(100)
+    for journey in journeys:
+        if isinstance(journey.get('last_updated'), str):
+            journey['last_updated'] = datetime.fromisoformat(journey['last_updated'])
+    return journeys
+
+@api_router.get("/domains/journey/{domain_name}")
+async def get_domain_journey(domain_name: str, current_user: User = Depends(get_current_user)):
+    """Get maturity journey for a specific domain"""
+    journey = await db.domain_journeys.find_one({"domain_name": domain_name}, {"_id": 0})
+    if not journey:
+        raise HTTPException(status_code=404, detail="Domain journey not found")
+    if isinstance(journey.get('last_updated'), str):
+        journey['last_updated'] = datetime.fromisoformat(journey['last_updated'])
+    return journey
+
+@api_router.put("/domains/journey/{domain_name}/level")
+async def update_domain_level(domain_name: str, new_level: int, current_user: User = Depends(get_current_user)):
+    """Update domain maturity level"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    level_descriptions = {
+        1: "Data Consumer - Consuming data from other domains",
+        2: "Data Aware - Understanding data needs and dependencies",
+        3: "Data Producer - Publishing initial data products",
+        4: "Data Mesh Contributor - Active participant in the mesh ecosystem",
+        5: "Data Mesh Leader - Driving data mesh excellence"
+    }
+    
+    await db.domain_journeys.update_one(
+        {"domain_name": domain_name},
+        {"$set": {
+            "current_level": new_level,
+            "level_description": level_descriptions.get(new_level, "Unknown level"),
+            "last_updated": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    await log_event("domain_level_update", domain_name, domain_name,
+                    f"Domain {domain_name} reached maturity level {new_level}",
+                    ["notify_governance", "update_metrics"])
+    
+    return {"message": f"Domain {domain_name} updated to level {new_level}"}
+
+# ============================================
+# DATA AS A PRODUCT PRINCIPLE - Data Contracts APIs
+# ============================================
+
+@api_router.get("/contracts", response_model=List[DataContract])
+async def get_data_contracts(current_user: User = Depends(get_current_user)):
+    """Get all data contracts"""
+    contracts = await db.data_contracts.find({}, {"_id": 0}).to_list(100)
+    for contract in contracts:
+        if isinstance(contract.get('created_at'), str):
+            contract['created_at'] = datetime.fromisoformat(contract['created_at'])
+    return contracts
+
+@api_router.post("/contracts", response_model=DataContract)
+async def create_data_contract(contract_data: DataContract, current_user: User = Depends(get_current_user)):
+    """Create a new data contract for a data product"""
+    doc = contract_data.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    await db.data_contracts.insert_one(doc)
+    
+    await log_event("contract_created", "governance", contract_data.id,
+                    f"Data contract v{contract_data.version} created for product {contract_data.data_product_id}",
+                    ["notify_consumers", "update_catalog"])
+    
+    return contract_data
+
+@api_router.get("/quality/metrics", response_model=List[QualityMetric])
+async def get_quality_metrics(current_user: User = Depends(get_current_user)):
+    """Get quality metrics for all data products"""
+    metrics = await db.quality_metrics.find({}, {"_id": 0}).to_list(100)
+    for metric in metrics:
+        if isinstance(metric.get('measured_at'), str):
+            metric['measured_at'] = datetime.fromisoformat(metric['measured_at'])
+    return metrics
+
+@api_router.post("/quality/metrics", response_model=QualityMetric)
+async def create_quality_metric(metric_data: QualityMetric, current_user: User = Depends(get_current_user)):
+    """Record a new quality metric"""
+    doc = metric_data.model_dump()
+    doc['measured_at'] = doc['measured_at'].isoformat()
+    await db.quality_metrics.insert_one(doc)
+    return metric_data
+
+@api_router.get("/lineage", response_model=List[DataLineage])
+async def get_data_lineage(current_user: User = Depends(get_current_user)):
+    """Get data lineage information"""
+    lineages = await db.data_lineages.find({}, {"_id": 0}).to_list(100)
+    return lineages
+
+@api_router.post("/lineage", response_model=DataLineage)
+async def create_data_lineage(lineage_data: DataLineage, current_user: User = Depends(get_current_user)):
+    """Create a data lineage relationship"""
+    doc = lineage_data.model_dump()
+    await db.data_lineages.insert_one(doc)
+    return lineage_data
+
+# ============================================
+# SELF-SERVE PLATFORM PRINCIPLE - Platform APIs
+# ============================================
+
+@api_router.get("/platform/capabilities", response_model=List[PlatformCapability])
+async def get_platform_capabilities(current_user: User = Depends(get_current_user)):
+    """Get all platform capabilities available to domain teams"""
+    capabilities = await db.platform_capabilities.find({}, {"_id": 0}).to_list(100)
+    return capabilities
+
+@api_router.get("/platform/stats")
+async def get_platform_stats(current_user: User = Depends(get_current_user)):
+    """Get platform usage statistics"""
+    total_products = await db.data_catalog.count_documents({})
+    total_contracts = await db.data_contracts.count_documents({})
+    total_capabilities = await db.platform_capabilities.count_documents({})
+    active_capabilities = await db.platform_capabilities.count_documents({"status": "active"})
+    
+    # Domain stats
+    port_products = await db.data_catalog.count_documents({"domain": "port"})
+    fleet_products = await db.data_catalog.count_documents({"domain": "fleet"})
+    epc_products = await db.data_catalog.count_documents({"domain": "epc"})
+    logistics_products = await db.data_catalog.count_documents({"domain": "logistics"})
+    
+    return {
+        "total_data_products": total_products,
+        "total_contracts": total_contracts,
+        "total_capabilities": total_capabilities,
+        "active_capabilities": active_capabilities,
+        "products_by_domain": {
+            "port": port_products,
+            "fleet": fleet_products,
+            "epc": epc_products,
+            "logistics": logistics_products
+        }
+    }
+
+# ============================================
+# FEDERATED GOVERNANCE PRINCIPLE - Enhanced Governance APIs
+# ============================================
+
+@api_router.get("/governance/compliance", response_model=List[ComplianceRule])
+async def get_compliance_rules(current_user: User = Depends(get_current_user)):
+    """Get all compliance rules"""
+    rules = await db.compliance_rules.find({}, {"_id": 0}).to_list(100)
+    return rules
+
+@api_router.post("/governance/compliance", response_model=ComplianceRule)
+async def create_compliance_rule(rule_data: ComplianceRule, current_user: User = Depends(get_current_user)):
+    """Create a new compliance rule"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    doc = rule_data.model_dump()
+    await db.compliance_rules.insert_one(doc)
+    
+    await log_event("compliance_rule_created", "governance", rule_data.id,
+                    f"Compliance rule '{rule_data.rule_name}' created for standard {rule_data.standard}",
+                    ["notify_domains", "update_policies"])
+    
+    return rule_data
+
+@api_router.get("/governance/standards", response_model=List[InteroperabilityStandard])
+async def get_interoperability_standards(current_user: User = Depends(get_current_user)):
+    """Get all interoperability standards"""
+    standards = await db.interop_standards.find({}, {"_id": 0}).to_list(100)
+    return standards
+
+@api_router.post("/governance/standards", response_model=InteroperabilityStandard)
+async def create_interoperability_standard(standard_data: InteroperabilityStandard, current_user: User = Depends(get_current_user)):
+    """Register a new interoperability standard"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    doc = standard_data.model_dump()
+    await db.interop_standards.insert_one(doc)
+    return standard_data
+
+@api_router.get("/governance/dashboard")
+async def get_governance_dashboard(current_user: User = Depends(get_current_user)):
+    """Get comprehensive governance dashboard stats"""
+    mappings_count = await db.semantic_mappings.count_documents({})
+    policies_count = await db.access_policies.count_documents({})
+    compliance_count = await db.compliance_rules.count_documents({})
+    standards_count = await db.interop_standards.count_documents({})
+    
+    active_rules = await db.compliance_rules.count_documents({"status": "active"})
+    
+    return {
+        "semantic_mappings": mappings_count,
+        "access_policies": policies_count,
+        "compliance_rules": compliance_count,
+        "active_compliance_rules": active_rules,
+        "interoperability_standards": standards_count
+    }
+
 app.include_router(api_router)
 
 app.add_middleware(
