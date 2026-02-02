@@ -351,6 +351,7 @@ function CanvasDetailView({ canvas }) {
 }
 
 function DataProductCanvas() {
+  const navigate = useNavigate();
   const [canvases, setCanvases] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
