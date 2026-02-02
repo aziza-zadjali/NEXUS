@@ -4,10 +4,7 @@ import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Shield, ArrowRightLeft, Lock, CheckCircle2,
-  Globe, FileCheck, Award
-} from 'lucide-react';
+import { Shield, ArrowRightLeft, Lock, Globe, FileCheck, Award } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -30,13 +27,11 @@ function Governance() {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      const [mappingsRes, policiesRes, complianceRes, standardsRes, dashboardRes] = await Promise.all([
-        axios.get(`${API}/governance/mappings`, { headers }),
-        axios.get(`${API}/governance/policies`, { headers }),
-        axios.get(`${API}/governance/compliance`, { headers }),
-        axios.get(`${API}/governance/standards`, { headers }),
-        axios.get(`${API}/governance/dashboard`, { headers })
-      ]);
+      const mappingsRes = await axios.get(`${API}/governance/mappings`, { headers });
+      const policiesRes = await axios.get(`${API}/governance/policies`, { headers });
+      const complianceRes = await axios.get(`${API}/governance/compliance`, { headers });
+      const standardsRes = await axios.get(`${API}/governance/standards`, { headers });
+      const dashboardRes = await axios.get(`${API}/governance/dashboard`, { headers });
       
       setMappings(mappingsRes.data);
       setPolicies(policiesRes.data);
@@ -51,20 +46,17 @@ function Governance() {
     }
   };
 
-  const getSeverityConfig = (severity) => {
-    const configs = {
-      'critical': { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200', badge: 'bg-red-500' },
-      'high': { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200', badge: 'bg-orange-500' },
-      'medium': { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200', badge: 'bg-amber-500' },
-      'low': { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200', badge: 'bg-blue-500' }
-    };
-    return configs[severity] || { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', badge: 'bg-slate-500' };
+  const getSeverityBadge = (severity) => {
+    if (severity === 'critical') return 'bg-red-500 text-white';
+    if (severity === 'high') return 'bg-orange-500 text-white';
+    if (severity === 'medium') return 'bg-amber-500 text-white';
+    return 'bg-blue-500 text-white';
   };
 
-  const getComplianceColor = (level) => {
-    if (level === 'Full') return 'bg-emerald-500';
-    if (level === 'Partial') return 'bg-amber-500';
-    return 'bg-red-500';
+  const getComplianceBadge = (level) => {
+    if (level === 'Full') return 'bg-emerald-500 text-white';
+    if (level === 'Partial') return 'bg-amber-500 text-white';
+    return 'bg-red-500 text-white';
   };
 
   if (loading) {
@@ -91,7 +83,6 @@ function Governance() {
               with organizational rules and industry regulations across the entire data mesh.
             </p>
           </div>
-          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl"></div>
         </div>
 
         {dashboardStats && (
@@ -168,7 +159,7 @@ function Governance() {
                           <CardDescription>Version {standard.version}</CardDescription>
                         </div>
                       </div>
-                      <Badge className={`${getComplianceColor(standard.compliance_level)} text-white`}>
+                      <Badge className={getComplianceBadge(standard.compliance_level)}>
                         {standard.compliance_level}
                       </Badge>
                     </div>
@@ -179,9 +170,7 @@ function Governance() {
                       <p className="text-xs font-bold text-slate-500 uppercase mb-2">Supported Domains</p>
                       <div className="flex flex-wrap gap-2">
                         {standard.supported_domains.map((domain, idx) => (
-                          <Badge key={idx} variant="outline" className="capitalize">
-                            {domain}
-                          </Badge>
+                          <Badge key={idx} variant="outline" className="capitalize">{domain}</Badge>
                         ))}
                       </div>
                     </div>
@@ -205,44 +194,39 @@ function Governance() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {complianceRules.map((rule) => {
-                    const config = getSeverityConfig(rule.severity);
-                    return (
-                      <div key={rule.id} className={`p-6 rounded-xl border ${config.bg} ${config.border}`}>
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${config.badge} text-white`}>
-                              <FileCheck className="h-5 w-5" />
-                            </div>
-                            <div>
-                              <h4 className="font-bold text-slate-900">{rule.rule_name}</h4>
-                              <p className="text-xs text-slate-500">Standard: {rule.standard}</p>
-                            </div>
+                  {complianceRules.map((rule) => (
+                    <div key={rule.id} className="p-6 rounded-xl border bg-slate-50">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-slate-900 text-white">
+                            <FileCheck className="h-5 w-5" />
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Badge className={`uppercase text-xs font-bold ${config.badge} text-white`}>
-                              {rule.severity}
-                            </Badge>
-                            <Badge variant={rule.status === 'active' ? 'default' : 'secondary'}>
-                              {rule.status}
-                            </Badge>
+                          <div>
+                            <h4 className="font-bold text-slate-900">{rule.rule_name}</h4>
+                            <p className="text-xs text-slate-500">Standard: {rule.standard}</p>
                           </div>
                         </div>
-                        <p className="text-sm text-slate-600 mb-4">{rule.description}</p>
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {rule.applicable_domains.map((domain, idx) => (
-                            <Badge key={idx} variant="outline" className="capitalize text-xs">
-                              {domain}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="p-3 bg-slate-900 rounded-lg">
-                          <p className="text-xs font-bold text-slate-400 uppercase mb-1">Validation Logic</p>
-                          <code className="text-xs text-cyan-400 font-mono">{rule.validation_logic}</code>
+                        <div className="flex items-center gap-2">
+                          <Badge className={getSeverityBadge(rule.severity)}>
+                            {rule.severity}
+                          </Badge>
+                          <Badge variant={rule.status === 'active' ? 'default' : 'secondary'}>
+                            {rule.status}
+                          </Badge>
                         </div>
                       </div>
-                    );
-                  })}
+                      <p className="text-sm text-slate-600 mb-4">{rule.description}</p>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {rule.applicable_domains.map((domain, idx) => (
+                          <Badge key={idx} variant="outline" className="capitalize text-xs">{domain}</Badge>
+                        ))}
+                      </div>
+                      <div className="p-3 bg-slate-900 rounded-lg">
+                        <p className="text-xs font-bold text-slate-400 uppercase mb-1">Validation Logic</p>
+                        <code className="text-xs text-cyan-400 font-mono">{rule.validation_logic}</code>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -315,9 +299,7 @@ function Governance() {
                             <p className="text-xs font-bold text-blue-500 uppercase mb-2">Allowed Domains</p>
                             <div className="flex flex-wrap gap-1">
                               {p.allowed_domains.map((domain, idx) => (
-                                <Badge key={idx} className="bg-blue-100 text-blue-700 capitalize">
-                                  {domain}
-                                </Badge>
+                                <Badge key={idx} className="bg-blue-100 text-blue-700 capitalize">{domain}</Badge>
                               ))}
                             </div>
                           </div>
@@ -325,9 +307,7 @@ function Governance() {
                             <p className="text-xs font-bold text-purple-500 uppercase mb-2">Allowed Roles</p>
                             <div className="flex flex-wrap gap-1">
                               {p.allowed_roles.map((role, idx) => (
-                                <Badge key={idx} className="bg-purple-100 text-purple-700 capitalize">
-                                  {role}
-                                </Badge>
+                                <Badge key={idx} className="bg-purple-100 text-purple-700 capitalize">{role}</Badge>
                               ))}
                             </div>
                           </div>
@@ -335,14 +315,10 @@ function Governance() {
                             <p className="text-xs font-bold text-emerald-500 uppercase mb-2">Visible Fields</p>
                             <div className="flex flex-wrap gap-1">
                               {p.data_fields_visible.slice(0, 3).map((field, idx) => (
-                                <Badge key={idx} variant="outline" className="text-xs font-mono">
-                                  {field}
-                                </Badge>
+                                <Badge key={idx} variant="outline" className="text-xs font-mono">{field}</Badge>
                               ))}
                               {p.data_fields_visible.length > 3 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{p.data_fields_visible.length - 3}
-                                </Badge>
+                                <Badge variant="outline" className="text-xs">+{p.data_fields_visible.length - 3}</Badge>
                               )}
                             </div>
                           </div>
@@ -362,14 +338,10 @@ function Governance() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-slate-300 leading-relaxed">
-              The <strong className="text-white">federated governance principle</strong> achieves interoperability 
-              of all data products through standardization, which is promoted through the whole data mesh by the 
-              governance group.
-            </p>
-            <p className="text-slate-300 leading-relaxed">
-              The main goal of federated governance is to create a <strong className="text-white">data ecosystem 
-              with adherence to organizational rules and industry regulations</strong>. This includes semantic 
-              mappings for field translation, ABAC policies for access control, and compliance rules for quality assurance.
+              The federated governance principle achieves interoperability of all data products through 
+              standardization, which is promoted through the whole data mesh by the governance group. 
+              The main goal is to create a data ecosystem with adherence to organizational rules and 
+              industry regulations.
             </p>
             <div className="flex gap-4 mt-6">
               <Badge className="bg-purple-500/30 text-purple-200 border-purple-400/30">Interoperability</Badge>
