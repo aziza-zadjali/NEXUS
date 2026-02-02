@@ -1,8 +1,9 @@
 import React, { useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AuthContext } from '@/App';
-import { Button } from '@/components/ui/button';
+import { Button } from '../components/ui/button';
 import { Database, Ship, Package, Building2, Shield, LogOut, LayoutDashboard, Network } from 'lucide-react';
+
+const AuthContext = React.createContext(null);
 
 function Layout({ children }) {
   const { user } = useContext(AuthContext);
