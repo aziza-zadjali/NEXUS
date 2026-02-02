@@ -13,6 +13,7 @@ import DomainJourney from "@/pages/DomainJourney";
 import DataContracts from "@/pages/DataContracts";
 import PlatformCapabilities from "@/pages/PlatformCapabilities";
 import DataProductCanvas from "@/pages/DataProductCanvas";
+import CreateCanvas from "@/pages/CreateCanvas";
 import { Toaster } from "@/components/ui/sonner";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
