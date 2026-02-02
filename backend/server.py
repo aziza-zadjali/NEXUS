@@ -239,19 +239,152 @@ class AccessPolicy(BaseModel):
     allowed_roles: List[str]
     data_fields_visible: List[str]
 
+# ============================================
+# ENHANCED DATA CONTRACT - Based on Data Contract Specification
+# ============================================
+
+class ContractProvider(BaseModel):
+    """Data Product Provider information"""
+    model_config = ConfigDict(extra="ignore")
+    name: str  # Owner name
+    email: str  # Owner email
+    team: str  # Team/department responsible
+    domain: str  # Domain the provider belongs to
+    output_port: str  # Reference to output port to access data
+
+class ContractDataset(BaseModel):
+    """Dataset information"""
+    model_config = ConfigDict(extra="ignore")
+    name: str  # Dataset name
+    description: str  # What the data represents
+    domain: str  # Business domain
+    dataset_type: str  # source, aggregate, consumer-aligned
+
+class SchemaField(BaseModel):
+    """Schema field with semantic information"""
+    model_config = ConfigDict(extra="ignore")
+    name: str
+    data_type: str  # string, integer, float, boolean, datetime, etc.
+    description: str  # What this field represents
+    business_term: Optional[str] = None  # Business glossary term
+    example: Optional[str] = None  # Example value
+    format: Optional[str] = None  # date format, regex pattern, etc.
+    required: bool = True
+    nullable: bool = False
+    unique: bool = False
+    sensitive: bool = False
+    is_pii: bool = False
+    classification: Optional[str] = None  # public, internal, confidential, restricted
+    constraints: List[str] = []  # Validation rules
+    tags: List[str] = []
+
+class ContractQuality(BaseModel):
+    """Quality attributes"""
+    model_config = ConfigDict(extra="ignore")
+    freshness_slo: str  # e.g., "15 minutes", "daily at 6am UTC"
+    freshness_description: str  # What freshness means for this data
+    expected_row_count_min: Optional[int] = None
+    expected_row_count_max: Optional[int] = None
+    completeness_threshold: float  # e.g., 99.5 (percentage)
+    accuracy_threshold: float  # e.g., 99.9 (percentage)
+    validity_rules: List[str] = []  # Business validation rules
+    data_quality_checks: List[str] = []  # Automated checks performed
+
+class ContractSLO(BaseModel):
+    """Service Level Objectives"""
+    model_config = ConfigDict(extra="ignore")
+    availability: str  # e.g., "99.9%"
+    availability_description: str  # What counts as available
+    latency_p95: Optional[str] = None  # 95th percentile response time
+    latency_p99: Optional[str] = None  # 99th percentile response time
+    throughput: Optional[str] = None  # Requests per second
+    support_hours: str  # e.g., "24x7", "Business hours UTC+4"
+    response_time_critical: str  # Response time for critical issues
+    response_time_normal: str  # Response time for normal issues
+    maintenance_window: Optional[str] = None  # Scheduled maintenance
+    incident_notification: str  # How consumers are notified
+
+class ContractBilling(BaseModel):
+    """Billing details for data usage"""
+    model_config = ConfigDict(extra="ignore")
+    pricing_model: str  # free, per-query, subscription, tiered
+    cost_per_query: Optional[str] = None  # e.g., "$0.001"
+    monthly_subscription: Optional[str] = None  # e.g., "$500/month"
+    free_tier_limit: Optional[str] = None  # e.g., "10,000 queries/month"
+    billing_contact: str
+    billing_cycle: str  # monthly, quarterly, annual
+    currency: str = "USD"
+    cost_center: Optional[str] = None
+
+class ContractTerms(BaseModel):
+    """Terms and conditions of data usage"""
+    model_config = ConfigDict(extra="ignore")
+    usage_restrictions: List[str]  # What consumers cannot do
+    allowed_purposes: List[str]  # What data can be used for
+    retention_period: str  # How long consumers can retain data
+    data_residency: Optional[str] = None  # Geographic restrictions
+    licensing: str  # License type
+    attribution_required: bool = False
+    redistribution_allowed: bool = False
+    modification_allowed: bool = False
+    change_notice_period: str  # e.g., "30 days"
+    breaking_change_policy: str  # How breaking changes are handled
+    deprecation_policy: str  # How deprecation is communicated
+
+class ContractConsumer(BaseModel):
+    """Consumer information"""
+    model_config = ConfigDict(extra="ignore")
+    name: str
+    team: str
+    domain: str
+    email: str
+    use_cases: List[str]
+    approved_date: str
+    access_level: str  # read, write, admin
+
 class DataContract(BaseModel):
+    """Enhanced Data Contract based on Data Contract Specification"""
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    data_product_id: str
+    
+    # Contract metadata
+    contract_name: str
     version: str
-    owner: str
-    description: str
-    schema_definition: Dict[str, Any]
-    quality_sla: Dict[str, Any]
-    terms_of_use: str
-    update_frequency: str
-    retention_period: str
+    status: str = "draft"  # draft, active, deprecated
+    
+    # Provider section
+    provider: ContractProvider
+    
+    # Dataset info
+    dataset: ContractDataset
+    
+    # Schema with semantics
+    schema_fields: List[SchemaField]
+    
+    # Quality attributes
+    quality: ContractQuality
+    
+    # Service level objectives
+    slo: ContractSLO
+    
+    # Billing details
+    billing: Optional[ContractBilling] = None
+    
+    # Terms and conditions
+    terms: ContractTerms
+    
+    # Consumers
+    consumers: List[ContractConsumer] = []
+    
+    # Legacy fields for backward compatibility
+    data_product_id: Optional[str] = None
+    description: Optional[str] = None
+    
+    # Timestamps
+    effective_date: Optional[str] = None
+    expiry_date: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = None
 
 class DomainJourney(BaseModel):
     model_config = ConfigDict(extra="ignore")
