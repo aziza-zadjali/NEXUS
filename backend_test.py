@@ -614,7 +614,10 @@ def main():
         ("Platform Stats APIs", tester.test_platform_stats_apis),
         ("Governance Compliance APIs", tester.test_governance_compliance_apis),
         ("Governance Standards APIs", tester.test_governance_standards_apis),
-        ("Governance Dashboard APIs", tester.test_governance_dashboard_apis)
+        ("Governance Dashboard APIs", tester.test_governance_dashboard_apis),
+        # New Data Product Canvas Tests
+        ("Canvas APIs", tester.test_canvas_apis),
+        ("Canvas CRUD Operations", tester.test_canvas_crud_operations)
     ]
     
     for test_name, test_func in tests:
