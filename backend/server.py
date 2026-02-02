@@ -159,6 +159,37 @@ class DataLineage(BaseModel):
     relationship_type: str
     transformation_description: str
 
+class PlatformCapability(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    category: str
+    description: str
+    features: List[str]
+    status: str
+    usage_count: int = 0
+
+class ComplianceRule(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    rule_name: str
+    standard: str
+    description: str
+    severity: str
+    applicable_domains: List[str]
+    validation_logic: str
+    status: str
+
+class InteroperabilityStandard(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    version: str
+    description: str
+    supported_domains: List[str]
+    compliance_level: str
+    certification_date: Optional[str] = None
+
 class EventLog(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
