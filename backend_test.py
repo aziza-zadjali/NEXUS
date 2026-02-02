@@ -258,6 +258,140 @@ class HydrogenDataMeshTester:
         
         return contracts_success and create_contract_success
 
+    def test_enhanced_data_contracts_apis(self):
+        """Test Enhanced Data Contracts API endpoints with comprehensive structure"""
+        print("\n🔍 Testing Enhanced Data Contracts APIs...")
+        
+        # Test GET /api/contracts - Should return 3 enhanced contracts
+        all_contracts_success, all_contracts = self.run_test(
+            "Get all enhanced contracts", "GET", "contracts", 200
+        )
+        
+        # Verify we have 3 contracts as expected
+        if all_contracts_success and isinstance(all_contracts, list):
+            print(f"   ✅ Retrieved {len(all_contracts)} contracts")
+            if len(all_contracts) >= 3:
+                print(f"   ✅ Expected 3+ contracts, found {len(all_contracts)}")
+            else:
+                print(f"   ⚠️  Expected 3+ contracts, only found {len(all_contracts)}")
+            
+            # Verify enhanced contract structure
+            if len(all_contracts) > 0:
+                contract = all_contracts[0]
+                required_sections = [
+                    'contract_name', 'version', 'status', 'provider', 'dataset', 
+                    'schema_fields', 'quality', 'slo', 'terms', 'consumers'
+                ]
+                missing_sections = [section for section in required_sections if section not in contract]
+                if missing_sections:
+                    print(f"   ⚠️  Missing contract sections: {missing_sections}")
+                else:
+                    print(f"   ✅ Contract structure verified - all required sections present")
+                
+                # Verify provider section
+                if 'provider' in contract and isinstance(contract['provider'], dict):
+                    provider_fields = ['name', 'email', 'team', 'domain', 'output_port']
+                    missing_provider = [f for f in provider_fields if f not in contract['provider']]
+                    if missing_provider:
+                        print(f"   ⚠️  Missing provider fields: {missing_provider}")
+                    else:
+                        print(f"   ✅ Provider section complete")
+                
+                # Verify schema_fields structure
+                if 'schema_fields' in contract and isinstance(contract['schema_fields'], list) and len(contract['schema_fields']) > 0:
+                    field = contract['schema_fields'][0]
+                    schema_field_attrs = ['name', 'data_type', 'description', 'business_term', 'required', 'nullable', 'unique', 'sensitive', 'is_pii', 'classification']
+                    missing_attrs = [attr for attr in schema_field_attrs if attr not in field]
+                    if missing_attrs:
+                        print(f"   ⚠️  Missing schema field attributes: {missing_attrs}")
+                    else:
+                        print(f"   ✅ Schema fields structure complete")
+        
+        # Test GET /api/contracts/dc1 - Get specific contract by ID
+        specific_contract_success, specific_contract = self.run_test(
+            "Get specific contract (dc1)", "GET", "contracts/dc1", 200
+        )
+        
+        # Verify specific contract structure
+        if specific_contract_success and isinstance(specific_contract, dict):
+            print(f"   ✅ Retrieved specific contract: {specific_contract.get('contract_name', 'Unknown')}")
+            
+            # Verify all enhanced sections are present
+            enhanced_sections = ['provider', 'dataset', 'schema_fields', 'quality', 'slo', 'billing', 'terms', 'consumers']
+            for section in enhanced_sections:
+                if section in specific_contract:
+                    print(f"   ✅ {section} section present")
+                else:
+                    print(f"   ⚠️  {section} section missing")
+        
+        # Test GET /api/contracts/dc1/yaml - Get contract in YAML format
+        yaml_contract_success, yaml_contract = self.run_test(
+            "Get contract YAML format (dc1)", "GET", "contracts/dc1/yaml", 200
+        )
+        
+        # Verify YAML response structure
+        if yaml_contract_success and isinstance(yaml_contract, dict):
+            if 'yaml' in yaml_contract and 'contract_id' in yaml_contract:
+                print(f"   ✅ YAML export successful for contract: {yaml_contract.get('contract_id')}")
+                yaml_content = yaml_contract.get('yaml', '')
+                if 'dataContractSpecification' in yaml_content:
+                    print(f"   ✅ YAML follows Data Contract Specification format")
+                else:
+                    print(f"   ⚠️  YAML missing Data Contract Specification header")
+            else:
+                print(f"   ⚠️  YAML response missing required fields")
+        
+        # Test GET /api/contracts/stats/summary - Get contract statistics
+        stats_success, stats = self.run_test(
+            "Get contract statistics summary", "GET", "contracts/stats/summary", 200
+        )
+        
+        # Verify stats structure
+        if stats_success and isinstance(stats, dict):
+            expected_stats = ['total_contracts', 'by_status', 'by_domain', 'total_consumers', 'avg_schema_fields', 'with_billing']
+            missing_stats = [stat for stat in expected_stats if stat not in stats]
+            if missing_stats:
+                print(f"   ⚠️  Missing stats: {missing_stats}")
+            else:
+                print(f"   ✅ Stats structure complete - Total contracts: {stats.get('total_contracts', 0)}")
+                print(f"   ✅ Consumers: {stats.get('total_consumers', 0)}, Avg fields: {stats.get('avg_schema_fields', 0)}")
+                print(f"   ✅ With billing: {stats.get('with_billing', 0)}")
+        
+        # Test PUT /api/contracts/dc1 - Update a contract
+        if specific_contract_success and isinstance(specific_contract, dict):
+            # Create updated contract data
+            updated_contract = specific_contract.copy()
+            updated_contract['version'] = '1.1'
+            updated_contract['status'] = 'active'
+            
+            # Add a new consumer to test consumer functionality
+            new_consumer = {
+                "name": "Test Consumer",
+                "team": "Testing Team",
+                "domain": "test",
+                "email": "test@example.com",
+                "use_cases": ["testing", "validation"],
+                "approved_date": "2024-12-20",
+                "access_level": "read"
+            }
+            
+            if 'consumers' not in updated_contract:
+                updated_contract['consumers'] = []
+            updated_contract['consumers'].append(new_consumer)
+            
+            update_success, update_response = self.run_test(
+                "Update contract (dc1)", "PUT", "contracts/dc1", 200, updated_contract
+            )
+            
+            if update_success:
+                print(f"   ✅ Contract update successful")
+            
+            return (all_contracts_success and specific_contract_success and 
+                   yaml_contract_success and stats_success and update_success)
+        
+        return (all_contracts_success and specific_contract_success and 
+               yaml_contract_success and stats_success)
+
     def test_quality_metrics_apis(self):
         """Test Data as a Product APIs - Quality Metrics"""
         print("\n🔍 Testing Quality Metrics APIs...")
