@@ -666,6 +666,85 @@ async def create_data_product(product_data: DataProduct, current_user: User = De
     return product_data
 
 # ============================================
+# TAG TEMPLATES API - Based on Google Cloud Data Mesh Demo
+# ============================================
+
+@api_router.get("/catalog/tag-templates")
+async def get_tag_templates(current_user: User = Depends(get_current_user)):
+    """Get all data catalog tag templates for data mesh governance"""
+    # Return standardized tag templates based on Google Cloud Data Mesh patterns
+    templates = [
+        {
+            "id": "tt-data-product",
+            "template_type": "data_product",
+            "display_name": "Data Product",
+            "description": "Core metadata for data products in the mesh - identifies discoverable data assets",
+            "fields": [
+                {"name": "product_name", "display_name": "Product Name", "type": "string", "required": True, "order": 1},
+                {"name": "data_product_description", "display_name": "Description", "type": "string", "required": True, "order": 2},
+                {"name": "data_product_status", "display_name": "Status", "type": "enum", "values": ["DRAFT", "RELEASED", "DEPRECATED"], "required": True, "order": 3},
+                {"name": "data_domain", "display_name": "Data Domain", "type": "enum", "values": ["Port", "Fleet", "EPC", "Logistics", "Analytics"], "required": True, "order": 4},
+                {"name": "business_owner", "display_name": "Business Owner", "type": "string", "required": True, "order": 5},
+                {"name": "technical_owner", "display_name": "Technical Owner", "type": "string", "required": True, "order": 6},
+                {"name": "documentation_link", "display_name": "Documentation Link", "type": "string", "required": False, "order": 7},
+                {"name": "access_request_link", "display_name": "Access Request Link", "type": "string", "required": False, "order": 8}
+            ]
+        },
+        {
+            "id": "tt-data-quality",
+            "template_type": "data_quality",
+            "display_name": "Data Quality SLA",
+            "description": "Quality metrics and service level agreements for data products",
+            "fields": [
+                {"name": "freshness_sla", "display_name": "Freshness SLA", "type": "string", "required": True, "order": 1},
+                {"name": "completeness_threshold", "display_name": "Completeness Threshold (%)", "type": "number", "required": True, "order": 2},
+                {"name": "accuracy_threshold", "display_name": "Accuracy Threshold (%)", "type": "number", "required": True, "order": 3},
+                {"name": "availability_sla", "display_name": "Availability SLA (%)", "type": "number", "required": False, "order": 4},
+                {"name": "validation_rules", "display_name": "Validation Rules", "type": "string", "required": False, "order": 5}
+            ]
+        },
+        {
+            "id": "tt-streaming-topic",
+            "template_type": "streaming_topic",
+            "display_name": "Streaming Topic Details",
+            "description": "Metadata for Pub/Sub streaming data products",
+            "fields": [
+                {"name": "schema_ref", "display_name": "Schema Reference", "type": "string", "required": True, "order": 1},
+                {"name": "message_format", "display_name": "Message Format", "type": "enum", "values": ["JSON", "Avro", "Protobuf"], "required": True, "order": 2},
+                {"name": "throughput", "display_name": "Expected Throughput", "type": "string", "required": False, "order": 3},
+                {"name": "retention_period", "display_name": "Retention Period", "type": "string", "required": False, "order": 4},
+                {"name": "partitioning_key", "display_name": "Partitioning Key", "type": "string", "required": False, "order": 5}
+            ]
+        },
+        {
+            "id": "tt-access-control",
+            "template_type": "access_control",
+            "display_name": "Access Control Policy",
+            "description": "Access policies and permissions for data products",
+            "fields": [
+                {"name": "classification", "display_name": "Data Classification", "type": "enum", "values": ["Public", "Internal", "Confidential", "Restricted"], "required": True, "order": 1},
+                {"name": "allowed_consumers", "display_name": "Allowed Consumers", "type": "string", "required": False, "order": 2},
+                {"name": "column_level_security", "display_name": "Column-Level Security", "type": "boolean", "required": False, "order": 3},
+                {"name": "row_level_security", "display_name": "Row-Level Security", "type": "boolean", "required": False, "order": 4},
+                {"name": "pii_fields", "display_name": "PII Fields", "type": "string", "required": False, "order": 5}
+            ]
+        },
+        {
+            "id": "tt-lineage",
+            "template_type": "lineage",
+            "display_name": "Data Lineage",
+            "description": "Tracks data origin, transformations, and dependencies",
+            "fields": [
+                {"name": "source_systems", "display_name": "Source Systems", "type": "string", "required": True, "order": 1},
+                {"name": "transformation_logic", "display_name": "Transformation Logic", "type": "string", "required": False, "order": 2},
+                {"name": "upstream_dependencies", "display_name": "Upstream Dependencies", "type": "string", "required": False, "order": 3},
+                {"name": "downstream_consumers", "display_name": "Downstream Consumers", "type": "string", "required": False, "order": 4}
+            ]
+        }
+    ]
+    return templates
+
+# ============================================
 # DATA PRODUCT CANVAS APIs
 # ============================================
 
