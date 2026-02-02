@@ -167,7 +167,7 @@ function Login() {
           {!isRegister && (
             <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-xs text-slate-600 text-center">
-                Demo: admin@port.om / password123
+                Demo: admin@asyad.om / asyad2025
               </p>
             </div>
           )}
