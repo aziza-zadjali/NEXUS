@@ -262,6 +262,161 @@ async def seed_database():
     await db.event_logs.insert_many(events)
     print(f"Created {len(events)} event logs")
     
+    routes = [
+        {
+            "id": "route1",
+            "route_name": "Port Duqm to Hub A",
+            "origin": "Port of Duqm",
+            "destination": "Duqm Hydrogen Hub A",
+            "transport_mode": "Heavy Duty Truck",
+            "distance_km": 45.5,
+            "estimated_duration_hours": 3.5,
+            "road_restrictions": ["Height limit 6m", "Weight limit 120 tons", "Night transport only"],
+            "status": "active",
+            "last_updated": "2025-01-15T10:00:00Z"
+        },
+        {
+            "id": "route2",
+            "route_name": "Port Salalah to Assembly Area",
+            "origin": "Port of Salalah",
+            "destination": "Secondary Assembly Area",
+            "transport_mode": "Specialized Heavy Transport",
+            "distance_km": 78.2,
+            "estimated_duration_hours": 6.0,
+            "road_restrictions": ["Blade length 80m", "Escort vehicle required", "Weather dependent"],
+            "status": "active",
+            "last_updated": "2025-01-15T10:00:00Z"
+        },
+        {
+            "id": "route3",
+            "route_name": "Hub B Coastal Route",
+            "origin": "Port of Duqm",
+            "destination": "Duqm Hydrogen Hub B",
+            "transport_mode": "Multi-axle Trailer",
+            "distance_km": 62.0,
+            "estimated_duration_hours": 4.5,
+            "road_restrictions": ["Bridge clearance 5.5m", "Permit required"],
+            "status": "planned",
+            "last_updated": "2025-01-15T10:00:00Z"
+        }
+    ]
+    await db.logistics_routes.insert_many(routes)
+    print(f"Created {len(routes)} logistics routes")
+    
+    permits = [
+        {
+            "id": "permit1",
+            "permit_number": "TRP-2025-001",
+            "permit_type": "Oversized Load Transport",
+            "shipment_id": "SHP-2025-001",
+            "issuing_authority": "Royal Oman Police - Traffic Department",
+            "status": "approved",
+            "requested_date": "2025-01-10",
+            "approved_date": "2025-01-12",
+            "expiry_date": "2025-02-10",
+            "restrictions": ["Night transport only", "Escort vehicle required"]
+        },
+        {
+            "id": "permit2",
+            "permit_number": "TRP-2025-002",
+            "permit_type": "Special Cargo Permit",
+            "shipment_id": "SHP-2025-002",
+            "issuing_authority": "Ministry of Transport",
+            "status": "pending",
+            "requested_date": "2025-01-14",
+            "approved_date": None,
+            "expiry_date": None,
+            "restrictions": ["Weather clearance needed", "Height restriction waiver"]
+        },
+        {
+            "id": "permit3",
+            "permit_number": "CUS-2025-003",
+            "permit_type": "Customs Clearance",
+            "shipment_id": "SHP-2025-003",
+            "issuing_authority": "Royal Oman Police - Customs",
+            "status": "approved",
+            "requested_date": "2025-01-13",
+            "approved_date": "2025-01-14",
+            "expiry_date": "2025-03-13",
+            "restrictions": ["Certificate of origin required"]
+        }
+    ]
+    await db.logistics_permits.insert_many(permits)
+    print(f"Created {len(permits)} logistics permits")
+    
+    weather_forecasts = [
+        {
+            "id": "weather1",
+            "location": "Port of Duqm",
+            "forecast_date": "2025-01-16",
+            "temperature_celsius": 24.5,
+            "wind_speed_kmh": 15.0,
+            "weather_condition": "Clear",
+            "visibility_km": 10.0,
+            "safe_for_transport": True
+        },
+        {
+            "id": "weather2",
+            "location": "Duqm Hydrogen Hub A",
+            "forecast_date": "2025-01-16",
+            "temperature_celsius": 26.0,
+            "wind_speed_kmh": 22.0,
+            "weather_condition": "Partly Cloudy",
+            "visibility_km": 8.5,
+            "safe_for_transport": True
+        },
+        {
+            "id": "weather3",
+            "location": "Coastal Route",
+            "forecast_date": "2025-01-16",
+            "temperature_celsius": 23.0,
+            "wind_speed_kmh": 45.0,
+            "weather_condition": "Strong Winds",
+            "visibility_km": 6.0,
+            "safe_for_transport": False
+        }
+    ]
+    await db.weather_forecasts.insert_many(weather_forecasts)
+    print(f"Created {len(weather_forecasts)} weather forecasts")
+    
+    assembly_areas = [
+        {
+            "id": "area1",
+            "area_name": "Main Assembly Area - Duqm",
+            "area_type": "Primary",
+            "location": "Duqm Special Economic Zone",
+            "capacity": 50,
+            "current_occupancy": 32,
+            "available_space": 18,
+            "status": "available",
+            "components_stored": ["Turbine Blades (12)", "Tower Sections (8)", "Nacelles (12)"]
+        },
+        {
+            "id": "area2",
+            "area_name": "Secondary Assembly - Salalah",
+            "area_type": "Secondary",
+            "location": "Port of Salalah Free Zone",
+            "capacity": 30,
+            "current_occupancy": 18,
+            "available_space": 12,
+            "status": "available",
+            "components_stored": ["Generators (6)", "Control Systems (12)"]
+        },
+        {
+            "id": "area3",
+            "area_name": "Staging Area - Hub B",
+            "area_type": "Staging",
+            "location": "Near Duqm Hydrogen Hub B",
+            "capacity": 20,
+            "current_occupancy": 19,
+            "available_space": 1,
+            "status": "full",
+            "components_stored": ["Tower Sections (15)", "Cables (4)"]
+        }
+    ]
+    await db.assembly_areas.insert_many(assembly_areas)
+    print(f"Created {len(assembly_areas)} assembly areas")
+    
     print("Database seeding completed successfully!")
     client.close()
 
