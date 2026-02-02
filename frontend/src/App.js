@@ -9,6 +9,9 @@ import DomainPort from "@/pages/DomainPort";
 import DomainFleet from "@/pages/DomainFleet";
 import DomainEPC from "@/pages/DomainEPC";
 import Governance from "@/pages/Governance";
+import DomainJourney from "@/pages/DomainJourney";
+import DataContracts from "@/pages/DataContracts";
+import PlatformCapabilities from "@/pages/PlatformCapabilities";
 import { Toaster } from "@/components/ui/sonner";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
