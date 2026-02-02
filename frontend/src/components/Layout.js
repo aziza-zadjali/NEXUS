@@ -20,6 +20,7 @@ function Layout({ children }) {
     { path: '/domain/port', label: 'Port Domain', icon: Ship },
     { path: '/domain/fleet', label: 'Fleet Domain', icon: Package },
     { path: '/domain/epc', label: 'EPC Domain', icon: Building2 },
+    { path: '/logistics', label: 'Control Tower', icon: Tower },
     { path: '/governance', label: 'Governance', icon: Shield }
   ];
 
