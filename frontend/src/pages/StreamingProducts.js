@@ -1,22 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
-  Activity, Zap, Database, ArrowRight, CheckCircle2, 
-  AlertTriangle, RefreshCw, Play, Pause, BarChart3,
-  Ship, Truck, Wind, MapPin, Clock, Filter, Layers
+  Activity, Zap, Database, ArrowRight, 
+  Play, Pause, BarChart3, Ship, Truck, Wind, MapPin, Filter, Layers
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = BACKEND_URL + '/api';
-
 // Pipeline Stage Component
 function PipelineStage({ stage, isLast }) {
-  const stageColors = {
+  const colorMap = {
     ingest: 'from-blue-500 to-blue-600',
     validate: 'from-amber-500 to-amber-600',
     enrich: 'from-purple-500 to-purple-600',
@@ -24,14 +19,14 @@ function PipelineStage({ stage, isLast }) {
     analytics: 'from-orange-500 to-orange-600',
     publish: 'from-cyan-500 to-cyan-600'
   };
-  
-  const colorClass = stageColors[stage.type] || 'from-slate-500 to-slate-600';
-  
+  const colorClass = colorMap[stage.type] || 'from-slate-500 to-slate-600';
+  const Icon = stage.icon;
+
   return (
     <div className="flex items-center">
       <div className="relative">
         <div className={'w-24 h-24 rounded-2xl bg-gradient-to-br ' + colorClass + ' flex flex-col items-center justify-center text-white shadow-lg'}>
-          <stage.icon className="h-8 w-8 mb-1" />
+          <Icon className="h-8 w-8 mb-1" />
           <span className="text-xs font-bold text-center px-1">{stage.name}</span>
         </div>
         {stage.metrics && (
@@ -39,9 +34,7 @@ function PipelineStage({ stage, isLast }) {
             {stage.metrics}
           </div>
         )}
-        {stage.status === 'running' && (
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
-        )}
+        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
       </div>
       {!isLast && (
         <div className="flex items-center mx-2">
@@ -54,27 +47,25 @@ function PipelineStage({ stage, isLast }) {
   );
 }
 
-// Real-time Event Card
+// Event Card Component
 function EventCard({ event }) {
-  const eventColors = {
+  const colorMap = {
     vessel_update: 'border-l-blue-500 bg-blue-50',
     shipment_update: 'border-l-purple-500 bg-purple-50',
     site_update: 'border-l-green-500 bg-green-50',
     route_alert: 'border-l-orange-500 bg-orange-50'
   };
-  
-  const eventIcons = {
+  const iconMap = {
     vessel_update: Ship,
     shipment_update: Truck,
     site_update: Wind,
     route_alert: MapPin
   };
-  
-  const colorClass = eventColors[event.event_type] || 'border-l-slate-500 bg-slate-50';
-  const Icon = eventIcons[event.event_type] || Activity;
+  const colorClass = colorMap[event.event_type] || 'border-l-slate-500 bg-slate-50';
+  const Icon = iconMap[event.event_type] || Activity;
 
   return (
-    <div className={'p-3 border-l-4 rounded-lg ' + colorClass + ' animate-fadeIn'}>
+    <div className={'p-3 border-l-4 rounded-lg ' + colorClass}>
       <div className="flex items-start gap-3">
         <Icon className="h-5 w-5 text-slate-600 flex-shrink-0" />
         <div className="flex-1 min-w-0">
@@ -106,14 +97,11 @@ function StreamingTopicCard({ topic }) {
               <CardDescription className="text-xs">{topic.domain} domain</CardDescription>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge className={statusColor + ' text-white'}>{topic.status}</Badge>
-          </div>
+          <Badge className={statusColor + ' text-white'}>{topic.status}</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-slate-600">{topic.description}</p>
-        
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="p-2 bg-slate-50 rounded-lg">
             <p className="text-lg font-black text-slate-900">{topic.messages_per_sec}</p>
@@ -128,7 +116,6 @@ function StreamingTopicCard({ topic }) {
             <p className="text-xs text-slate-500">retention</p>
           </div>
         </div>
-
         <div className="p-2 bg-slate-100 rounded-lg">
           <p className="text-xs text-slate-500 mb-1">Schema</p>
           <code className="text-xs font-mono text-slate-700">{topic.schema_ref}</code>
@@ -138,7 +125,7 @@ function StreamingTopicCard({ topic }) {
   );
 }
 
-// Consumer Subscription Card
+// Subscription Card
 function SubscriptionCard({ subscription }) {
   return (
     <Card className="border-l-4 border-l-cyan-500">
@@ -168,113 +155,61 @@ function SubscriptionCard({ subscription }) {
 
 function StreamingProducts() {
   const [events, setEvents] = useState([]);
-  const [topics, setTopics] = useState([]);
-  const [subscriptions, setSubscriptions] = useState([]);
   const [pipelineStatus, setPipelineStatus] = useState('running');
-  const [loading, setLoading] = useState(true);
 
-  // Pipeline stages based on Google Cloud Data Mesh demo
   const pipelineStages = [
-    { type: 'ingest', name: 'Ingest Events', icon: Database, metrics: '150/s', status: 'running' },
-    { type: 'validate', name: 'Parse & Validate', icon: Filter, metrics: '99.2%', status: 'running' },
-    { type: 'enrich', name: 'Enrich Data', icon: Layers, metrics: '+3 fields', status: 'running' },
-    { type: 'persist', name: 'Persist to BQ', icon: Database, metrics: '147/s', status: 'running' },
-    { type: 'analytics', name: 'Generate Stats', icon: BarChart3, metrics: '5min', status: 'running' },
-    { type: 'publish', name: 'Publish Topic', icon: Zap, metrics: '50/s', status: 'running' }
+    { type: 'ingest', name: 'Ingest Events', icon: Database, metrics: '150/s' },
+    { type: 'validate', name: 'Parse & Validate', icon: Filter, metrics: '99.2%' },
+    { type: 'enrich', name: 'Enrich Data', icon: Layers, metrics: '+3 fields' },
+    { type: 'persist', name: 'Persist to BQ', icon: Database, metrics: '147/s' },
+    { type: 'analytics', name: 'Generate Stats', icon: BarChart3, metrics: '5min' },
+    { type: 'publish', name: 'Publish Topic', icon: Zap, metrics: '50/s' }
+  ];
+
+  const topics = [
+    { id: 't1', name: 'vessel-status-v1', domain: 'port', description: 'Real-time vessel arrival and departure events', status: 'active', messages_per_sec: 45, subscribers: 3, retention: '7d', schema_ref: 'schemas/vessel-event-v1.avro' },
+    { id: 't2', name: 'shipment-tracking-v1', domain: 'fleet', description: 'GPS tracking events for wind turbine shipments', status: 'active', messages_per_sec: 120, subscribers: 5, retention: '3d', schema_ref: 'schemas/shipment-event-v1.avro' },
+    { id: 't3', name: 'site-readiness-v1', domain: 'epc', description: 'Installation site status updates', status: 'active', messages_per_sec: 8, subscribers: 2, retention: '14d', schema_ref: 'schemas/site-event-v1.avro' },
+    { id: 't4', name: 'logistics-alerts-v1', domain: 'logistics', description: 'Route alerts and weather warnings', status: 'active', messages_per_sec: 15, subscribers: 4, retention: '30d', schema_ref: 'schemas/alert-event-v1.avro' }
+  ];
+
+  const subscriptions = [
+    { id: 's1', name: 'control-tower-sub', topic: 'vessel-status-v1', consumer: 'Control Tower', ack_deadline: 30, unacked_messages: 12, oldest_unacked: '2s' },
+    { id: 's2', name: 'fleet-ops-sub', topic: 'shipment-tracking-v1', consumer: 'Fleet Operations', ack_deadline: 60, unacked_messages: 45, oldest_unacked: '5s' },
+    { id: 's3', name: 'analytics-sub', topic: 'vessel-status-v1', consumer: 'Analytics Engine', ack_deadline: 120, unacked_messages: 0, oldest_unacked: '-' }
   ];
 
   useEffect(function() {
-    // Initialize with mock streaming data
-    setTopics([
-      {
-        id: 't1',
-        name: 'vessel-status-v1',
-        domain: 'port',
-        description: 'Real-time vessel arrival and departure events from all Oman ports',
-        status: 'active',
-        messages_per_sec: 45,
-        subscribers: 3,
-        retention: '7d',
-        schema_ref: 'schemas/vessel-event-v1.avro'
-      },
-      {
-        id: 't2',
-        name: 'shipment-tracking-v1',
-        domain: 'fleet',
-        description: 'GPS tracking events for wind turbine component shipments',
-        status: 'active',
-        messages_per_sec: 120,
-        subscribers: 5,
-        retention: '3d',
-        schema_ref: 'schemas/shipment-event-v1.avro'
-      },
-      {
-        id: 't3',
-        name: 'site-readiness-v1',
-        domain: 'epc',
-        description: 'Installation site status updates and capacity changes',
-        status: 'active',
-        messages_per_sec: 8,
-        subscribers: 2,
-        retention: '14d',
-        schema_ref: 'schemas/site-event-v1.avro'
-      },
-      {
-        id: 't4',
-        name: 'logistics-alerts-v1',
-        domain: 'logistics',
-        description: 'Route alerts, permit updates, and weather warnings',
-        status: 'active',
-        messages_per_sec: 15,
-        subscribers: 4,
-        retention: '30d',
-        schema_ref: 'schemas/alert-event-v1.avro'
-      }
-    ]);
-
-    setSubscriptions([
-      { id: 's1', name: 'control-tower-sub', topic: 'vessel-status-v1', consumer: 'Control Tower', ack_deadline: 30, unacked_messages: 12, oldest_unacked: '2s' },
-      { id: 's2', name: 'fleet-ops-sub', topic: 'shipment-tracking-v1', consumer: 'Fleet Operations', ack_deadline: 60, unacked_messages: 45, oldest_unacked: '5s' },
-      { id: 's3', name: 'analytics-sub', topic: 'vessel-status-v1', consumer: 'Analytics Engine', ack_deadline: 120, unacked_messages: 0, oldest_unacked: '-' }
-    ]);
-
-    setLoading(false);
-
-    // Simulate real-time events
-    const eventTypes = [
-      { type: 'vessel_update', title: 'Vessel Status Change', descriptions: ['Wind Champion arrived at Berth B-Heavy-01', 'Green Transporter ETA updated to 14:00', 'Vestas Voyager unloading complete'] },
-      { type: 'shipment_update', title: 'Shipment Update', descriptions: ['Turbine blades passed checkpoint A-47', 'Convoy ASYAD-002 departed Salalah', 'Tower section delivered to Site Alpha'] },
-      { type: 'site_update', title: 'Site Status', descriptions: ['Block A ready for next delivery', 'Turbine T-08 installation started', 'Capacity updated: 8/25 turbines'] },
-      { type: 'route_alert', title: 'Route Alert', descriptions: ['Weather advisory: Wind speed 45km/h', 'Bridge inspection complete - route clear', 'Permit ROP-2025-0847 approved'] }
+    const eventTemplates = [
+      { type: 'vessel_update', title: 'Vessel Status', descs: ['Wind Champion arrived at Berth B-Heavy-01', 'Green Transporter ETA updated', 'Vestas Voyager unloading complete'] },
+      { type: 'shipment_update', title: 'Shipment Update', descs: ['Turbine blades passed checkpoint A-47', 'Convoy ASYAD-002 departed', 'Tower section delivered'] },
+      { type: 'site_update', title: 'Site Status', descs: ['Block A ready for delivery', 'Turbine T-08 installation started', 'Capacity updated'] },
+      { type: 'route_alert', title: 'Route Alert', descs: ['Weather advisory: Wind 45km/h', 'Bridge inspection complete', 'Permit approved'] }
     ];
 
     const generateEvent = function() {
-      const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
-      const description = eventType.descriptions[Math.floor(Math.random() * eventType.descriptions.length)];
-      const now = new Date();
-      
+      const idx = Math.floor(Math.random() * eventTemplates.length);
+      const template = eventTemplates[idx];
+      const descIdx = Math.floor(Math.random() * template.descs.length);
       return {
-        id: 'evt-' + Date.now(),
-        event_type: eventType.type,
-        title: eventType.title,
-        description: description,
-        timestamp: now.toLocaleTimeString()
+        id: 'evt-' + Date.now() + '-' + Math.random(),
+        event_type: template.type,
+        title: template.title,
+        description: template.descs[descIdx],
+        timestamp: new Date().toLocaleTimeString()
       };
     };
 
-    // Add initial events
-    const initialEvents = [];
-    for (let i = 0; i < 5; i++) {
-      initialEvents.push(generateEvent());
-    }
-    setEvents(initialEvents);
+    const initial = [];
+    for (let i = 0; i < 5; i++) { initial.push(generateEvent()); }
+    setEvents(initial);
 
-    // Add new event every 3 seconds
     const interval = setInterval(function() {
       if (pipelineStatus === 'running') {
         setEvents(function(prev) {
-          const newEvents = [generateEvent(), ...prev];
-          return newEvents.slice(0, 20); // Keep last 20 events
+          const newEvents = [generateEvent()];
+          for (let i = 0; i < prev.length && i < 19; i++) { newEvents.push(prev[i]); }
+          return newEvents;
         });
       }
     }, 3000);
@@ -283,21 +218,31 @@ function StreamingProducts() {
   }, [pipelineStatus]);
 
   const togglePipeline = function() {
-    setPipelineStatus(function(prev) {
-      const newStatus = prev === 'running' ? 'paused' : 'running';
-      toast.success('Pipeline ' + (newStatus === 'running' ? 'started' : 'paused'));
-      return newStatus;
-    });
+    const newStatus = pipelineStatus === 'running' ? 'paused' : 'running';
+    setPipelineStatus(newStatus);
+    toast.success('Pipeline ' + (newStatus === 'running' ? 'started' : 'paused'));
   };
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-        </div>
-      </Layout>
+  const stageElements = [];
+  for (let i = 0; i < pipelineStages.length; i++) {
+    stageElements.push(
+      <PipelineStage key={pipelineStages[i].type} stage={pipelineStages[i]} isLast={i === pipelineStages.length - 1} />
     );
+  }
+
+  const topicCards = [];
+  for (let i = 0; i < topics.length; i++) {
+    topicCards.push(<StreamingTopicCard key={topics[i].id} topic={topics[i]} />);
+  }
+
+  const subCards = [];
+  for (let i = 0; i < subscriptions.length; i++) {
+    subCards.push(<SubscriptionCard key={subscriptions[i].id} subscription={subscriptions[i]} />);
+  }
+
+  const eventCards = [];
+  for (let i = 0; i < events.length; i++) {
+    eventCards.push(<EventCard key={events[i].id} event={events[i]} />);
   }
 
   return (
@@ -315,7 +260,7 @@ function StreamingProducts() {
                 <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Streaming Data Pipeline</h1>
                 <p className="text-orange-100 font-medium text-lg max-w-2xl">
                   Event-driven data products powered by Pub/Sub streaming.
-                  Consume real-time logistics events via subscriptions.
+                  Based on Google Cloud Data Mesh architecture.
                 </p>
               </div>
               <Button 
@@ -353,38 +298,22 @@ function StreamingProducts() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-center py-6 overflow-x-auto">
-              {pipelineStages.map(function(stage, idx) {
-                return (
-                  <PipelineStage 
-                    key={stage.type} 
-                    stage={stage} 
-                    isLast={idx === pipelineStages.length - 1}
-                  />
-                );
-              })}
+              {stageElements}
             </div>
           </CardContent>
         </Card>
 
         <div className="grid grid-cols-3 gap-6">
-          {/* Streaming Topics */}
+          {/* Topics and Subscriptions */}
           <div className="col-span-2 space-y-4">
             <h2 className="text-xl font-black uppercase tracking-tight">Streaming Topics</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {topics.map(function(topic) {
-                return <StreamingTopicCard key={topic.id} topic={topic} />;
-              })}
-            </div>
+            <div className="grid grid-cols-2 gap-4">{topicCards}</div>
 
             <h2 className="text-xl font-black uppercase tracking-tight pt-4">Consumer Subscriptions</h2>
-            <div className="grid grid-cols-3 gap-4">
-              {subscriptions.map(function(sub) {
-                return <SubscriptionCard key={sub.id} subscription={sub} />;
-              })}
-            </div>
+            <div className="grid grid-cols-3 gap-4">{subCards}</div>
           </div>
 
-          {/* Real-time Events Feed */}
+          {/* Live Events Feed */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black uppercase tracking-tight">Live Events</h2>
@@ -395,9 +324,7 @@ function StreamingProducts() {
             </div>
             <Card className="h-[600px] overflow-hidden">
               <CardContent className="p-3 h-full overflow-y-auto space-y-2">
-                {events.map(function(event) {
-                  return <EventCard key={event.id} event={event} />;
-                })}
+                {eventCards}
               </CardContent>
             </Card>
           </div>
