@@ -11,33 +11,6 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const StatCard = ({ title, icon: Icon, value, subtitle, color, testId }) => (
-  <Card className={`border-l-4 border-l-${color}-500 hover:shadow-md transition-shadow`} data-testid={testId}>
-    <CardHeader className="flex flex-row items-center justify-between pb-2">
-      <CardTitle className="text-sm font-medium text-slate-600">{title}</CardTitle>
-      <Icon className={`h-4 w-4 text-${color}-500`} />
-    </CardHeader>
-    <CardContent>
-      <div className="text-3xl font-bold text-slate-900">{value}</div>
-      <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
-    </CardContent>
-  </Card>
-);
-
-const DomainCard = ({ title, description, icon: Icon, color, onClick, testId }) => (
-  <button
-    onClick={onClick}
-    className={`w-full p-3 text-left rounded-lg border border-${color}-200 bg-${color}-50 hover:bg-${color}-100 transition-colors domain-badge`}
-    data-testid={testId}
-  >
-    <div className="flex items-center gap-2">
-      <Icon className={`h-4 w-4 text-${color}-600`} />
-      <span className={`font-medium text-${color}-900`}>{title}</span>
-    </div>
-    <p className={`text-xs text-${color}-700 mt-1`}>{description}</p>
-  </button>
-);
-
 function Dashboard() {
   const { user } = useContext(AuthContext);
   const [stats, setStats] = useState(null);
@@ -45,119 +18,96 @@ function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    const fetchData = async () => {
+      try {
+        const headers = { Authorization: `Bearer ${token}` };
+        const [statsRes, eventsRes] = await Promise.all([
+          axios.get(`${API}/dashboard/stats`, { headers }),
+          axios.get(`${API}/events`, { headers })
+        ]);
+        setStats(statsRes.data);
+        setEvents(eventsRes.data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const fetchData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      
-      const [statsRes, eventsRes] = await Promise.all([
-        axios.get(`${API}/dashboard/stats`, { headers }),
-        axios.get(`${API}/events`, { headers })
-      ]);
-      
-      setStats(statsRes.data);
-      setEvents(eventsRes.data);
-    } catch (error) {
-      toast.error('Failed to fetch dashboard data');
-    }
-  };
-
-  const getEventColor = (eventType) => {
-    const colors = {
-      'vessel_update': 'bg-blue-100 text-blue-700',
-      'shipment_update': 'bg-purple-100 text-purple-700',
-      'site_update': 'bg-green-100 text-green-700'
-    };
-    return colors[eventType] || 'bg-slate-100 text-slate-700';
-  };
+  if (!user) return null;
 
   return (
     <Layout>
       <div className="space-y-6 fade-in" data-testid="dashboard">
         <div>
           <h1 className="text-4xl font-bold text-slate-900 mb-2">Data Mesh Dashboard</h1>
-          <p className="text-slate-600">
-            Welcome, {user?.name} | Domain: <Badge variant="outline" className="ml-1">{user?.domain}</Badge>
-          </p>
+          <p className="text-slate-600">Welcome, {user.name}</p>
         </div>
 
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard
-              title="Port Vessels"
-              icon={Ship}
-              value={stats.total_vessels}
-              subtitle={`${stats.vessels_in_port} currently berthed`}
-              color="blue"
-              testId="stat-card-vessels"
-            />
-            <StatCard
-              title="Fleet Shipments"
-              icon={Package}
-              value={stats.total_shipments}
-              subtitle={`${stats.shipments_in_transit} in transit`}
-              color="purple"
-              testId="stat-card-shipments"
-            />
-            <StatCard
-              title="EPC Sites"
-              icon={Building2}
-              value={stats.total_sites}
-              subtitle={`${stats.sites_ready} ready for delivery`}
-              color="green"
-              testId="stat-card-sites"
-            />
-            <StatCard
-              title="Data Products"
-              icon={Database}
-              value={stats.data_products}
-              subtitle="Available in catalog"
-              color="amber"
-              testId="stat-card-products"
-            />
+            <Card className="border-l-4 border-l-blue-500" data-testid="stat-card-vessels">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-slate-600">Port Vessels</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stats.total_vessels}</div>
+                <p className="text-xs text-slate-500 mt-1">{stats.vessels_in_port} berthed</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-purple-500" data-testid="stat-card-shipments">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-slate-600">Fleet Shipments</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stats.total_shipments}</div>
+                <p className="text-xs text-slate-500 mt-1">{stats.shipments_in_transit} in transit</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-green-500" data-testid="stat-card-sites">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-slate-600">EPC Sites</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stats.total_sites}</div>
+                <p className="text-xs text-slate-500 mt-1">{stats.sites_ready} ready</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-amber-500" data-testid="stat-card-products">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-slate-600">Data Products</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stats.data_products}</div>
+                <p className="text-xs text-slate-500 mt-1">Available</p>
+              </CardContent>
+            </Card>
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <Card className="lg:col-span-2" data-testid="recent-events-card">
+          <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Recent Events
-              </CardTitle>
+              <CardTitle>Recent Events</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="space-y-3">
                 {events.length === 0 ? (
                   <p className="text-sm text-slate-500 text-center py-8">No events yet</p>
                 ) : (
                   events.map((event) => (
-                    <div key={event.id} className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
-                      <div className={`w-2 h-2 rounded-full mt-2 status-pulse ${
-                        event.event_type === 'vessel_update' ? 'bg-blue-500' : 
-                        event.event_type === 'shipment_update' ? 'bg-purple-500' : 'bg-green-500'
-                      }`}></div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge className={getEventColor(event.event_type)} variant="secondary">
-                            {event.event_type.replace('_', ' ')}
-                          </Badge>
-                          <span className="text-xs text-slate-500 uppercase">{event.domain}</span>
-                        </div>
-                        <p className="text-sm text-slate-700">{event.description}</p>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {event.triggered_actions.map((action, idx) => (
-                            <span key={idx} className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
-                              {action}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
+                    <div key={event.id} className="p-3 rounded-lg border">
+                      <Badge className="mb-2">{event.event_type}</Badge>
+                      <p className="text-sm">{event.description}</p>
                     </div>
                   ))
                 )}
@@ -165,39 +115,36 @@ function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card data-testid="domain-access-card">
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5" />
-                Domain Access
-              </CardTitle>
+              <CardTitle>Domain Access</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <DomainCard
-                  title="Port Authority"
-                  description="Vessel & berth management"
-                  icon={Ship}
-                  color="blue"
+                <button
                   onClick={() => navigate('/domain/port')}
-                  testId="navigate-port-domain"
-                />
-                <DomainCard
-                  title="Fleet Operations"
-                  description="Logistics & shipments"
-                  icon={Package}
-                  color="purple"
+                  className="w-full p-3 text-left rounded-lg border bg-blue-50"
+                  data-testid="navigate-port-domain"
+                >
+                  <div className="font-medium">Port Authority</div>
+                  <p className="text-xs text-slate-600">Vessel management</p>
+                </button>
+                <button
                   onClick={() => navigate('/domain/fleet')}
-                  testId="navigate-fleet-domain"
-                />
-                <DomainCard
-                  title="EPC Sites"
-                  description="Site readiness tracking"
-                  icon={Building2}
-                  color="green"
+                  className="w-full p-3 text-left rounded-lg border bg-purple-50"
+                  data-testid="navigate-fleet-domain"
+                >
+                  <div className="font-medium">Fleet Operations</div>
+                  <p className="text-xs text-slate-600">Logistics</p>
+                </button>
+                <button
                   onClick={() => navigate('/domain/epc')}
-                  testId="navigate-epc-domain"
-                />
+                  className="w-full p-3 text-left rounded-lg border bg-green-50"
+                  data-testid="navigate-epc-domain"
+                >
+                  <div className="font-medium">EPC Sites</div>
+                  <p className="text-xs text-slate-600">Site readiness</p>
+                </button>
               </div>
             </CardContent>
           </Card>
