@@ -86,7 +86,7 @@ function Dashboard() {
   ];
 
   return (
-    <Layout>
+    <Layout user={user}>
       <div className="space-y-8 animate-in" data-testid="dashboard">
         
         {/* Hero Section */}
