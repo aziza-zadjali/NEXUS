@@ -385,10 +385,13 @@ async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
     shipments_count = await db.fleet_shipments.count_documents({})
     sites_count = await db.epc_sites.count_documents({})
     products_count = await db.data_catalog.count_documents({})
+    routes_count = await db.logistics_routes.count_documents({})
+    permits_count = await db.logistics_permits.count_documents({})
     
     vessels_in_port = await db.port_vessels.count_documents({"status": "berthed"})
     shipments_in_transit = await db.fleet_shipments.count_documents({"status": "in_transit"})
     sites_ready = await db.epc_sites.count_documents({"readiness_status": "ready"})
+    permits_pending = await db.logistics_permits.count_documents({"status": "pending"})
     
     return {
         "total_vessels": vessels_count,
@@ -397,8 +400,107 @@ async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
         "shipments_in_transit": shipments_in_transit,
         "total_sites": sites_count,
         "sites_ready": sites_ready,
-        "data_products": products_count
+        "data_products": products_count,
+        "total_routes": routes_count,
+        "total_permits": permits_count,
+        "permits_pending": permits_pending
     }
+
+@api_router.get("/logistics/routes", response_model=List[Route])
+async def get_routes(current_user: User = Depends(get_current_user)):
+    routes = await db.logistics_routes.find({}, {"_id": 0}).to_list(100)
+    for route in routes:
+        if isinstance(route.get('last_updated'), str):
+            route['last_updated'] = datetime.fromisoformat(route['last_updated'])
+    return routes
+
+@api_router.post("/logistics/routes", response_model=Route)
+async def create_route(route_data: Route, current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin" and current_user.domain != "logistics":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    doc = route_data.model_dump()
+    doc['last_updated'] = doc['last_updated'].isoformat()
+    await db.logistics_routes.insert_one(doc)
+    
+    await log_event("route_created", "logistics", route_data.id,
+                    f"Route {route_data.route_name} created: {route_data.origin} to {route_data.destination}",
+                    ["notify_fleet", "update_permits"])
+    
+    return route_data
+
+@api_router.get("/logistics/permits", response_model=List[Permit])
+async def get_permits(current_user: User = Depends(get_current_user)):
+    permits = await db.logistics_permits.find({}, {"_id": 0}).to_list(100)
+    return permits
+
+@api_router.post("/logistics/permits", response_model=Permit)
+async def create_permit(permit_data: Permit, current_user: User = Depends(get_current_user)):
+    doc = permit_data.model_dump()
+    await db.logistics_permits.insert_one(doc)
+    
+    await log_event("permit_requested", "logistics", permit_data.id,
+                    f"Permit {permit_data.permit_number} requested for shipment {permit_data.shipment_id}",
+                    ["notify_authority", "track_status"])
+    
+    return permit_data
+
+@api_router.put("/logistics/permits/{permit_id}", response_model=Permit)
+async def update_permit(permit_id: str, status: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    permit = await db.logistics_permits.find_one({"id": permit_id}, {"_id": 0})
+    if not permit:
+        raise HTTPException(status_code=404, detail="Permit not found")
+    
+    await db.logistics_permits.update_one(
+        {"id": permit_id},
+        {"$set": {"status": status, "approved_date": datetime.now(timezone.utc).isoformat() if status == "approved" else None}}
+    )
+    
+    permit['status'] = status
+    if status == "approved":
+        permit['approved_date'] = datetime.now(timezone.utc).isoformat()
+    
+    await log_event("permit_updated", "logistics", permit_id,
+                    f"Permit {permit['permit_number']} status changed to {status}",
+                    ["notify_shipper", "enable_transport"])
+    
+    return Permit(**permit)
+
+@api_router.get("/logistics/weather", response_model=List[WeatherForecast])
+async def get_weather_forecasts(current_user: User = Depends(get_current_user)):
+    forecasts = await db.weather_forecasts.find({}, {"_id": 0}).to_list(100)
+    return forecasts
+
+@api_router.post("/logistics/weather", response_model=WeatherForecast)
+async def create_weather_forecast(forecast_data: WeatherForecast, current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    doc = forecast_data.model_dump()
+    await db.weather_forecasts.insert_one(doc)
+    return forecast_data
+
+@api_router.get("/logistics/assembly-areas", response_model=List[AssemblyArea])
+async def get_assembly_areas(current_user: User = Depends(get_current_user)):
+    areas = await db.assembly_areas.find({}, {"_id": 0}).to_list(100)
+    return areas
+
+@api_router.post("/logistics/assembly-areas", response_model=AssemblyArea)
+async def create_assembly_area(area_data: AssemblyArea, current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    doc = area_data.model_dump()
+    await db.assembly_areas.insert_one(doc)
+    
+    await log_event("assembly_area_registered", "logistics", area_data.id,
+                    f"Assembly area {area_data.area_name} registered with capacity {area_data.capacity}",
+                    ["update_inventory", "notify_logistics"])
+    
+    return area_data
 
 app.include_router(api_router)
 
