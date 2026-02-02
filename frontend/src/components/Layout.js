@@ -5,8 +5,9 @@ import { Database, Ship, Package, Building2, Shield, LogOut, LayoutDashboard, Ne
 
 const AuthContext = React.createContext(null);
 
-function Layout({ children }) {
-  const { user } = useContext(AuthContext);
+function Layout({ children, user: userProp }) {
+  const contextUser = useContext(AuthContext);
+  const user = userProp || contextUser;
   const navigate = useNavigate();
   const location = useLocation();
 
