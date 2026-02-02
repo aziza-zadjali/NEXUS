@@ -15,6 +15,7 @@ import PlatformCapabilities from "@/pages/PlatformCapabilities";
 import DataProductCanvas from "@/pages/DataProductCanvas";
 import CreateCanvas from "@/pages/CreateCanvas";
 import StreamingProducts from "@/pages/StreamingProducts";
+import DataProductsManage from "@/pages/DataProductsManage";
 import { Toaster } from "@/components/ui/sonner";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
