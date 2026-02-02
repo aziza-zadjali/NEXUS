@@ -424,16 +424,7 @@ function CanvasDetailView({ canvas, onClose }) {
               <CardDescription>Domain-specific terminology for this data product</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {canvas.ubiquitous_language && Object.keys(canvas.ubiquitous_language).map(function(term) {
-                  return (
-                    <div key={term} className="p-4 border rounded-lg">
-                      <dt className="font-bold text-slate-900">{term}</dt>
-                      <dd className="text-sm text-slate-600 mt-1">{canvas.ubiquitous_language[term]}</dd>
-                    </div>
-                  );
-                })}
-              </div>
+              <UbiquitousLanguageList language={canvas.ubiquitous_language} />
             </CardContent>
           </Card>
 
