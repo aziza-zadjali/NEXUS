@@ -316,6 +316,30 @@ frontend:
         agent: "main"
         comment: "Navigation updated with Domain Journey, Contracts, Platform items"
 
+  - task: "Data Product Canvas Page"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/DataProductCanvas.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Page working - shows canvas cards with consumers, output ports, fields. Detail modal shows all canvas sections."
+
+  - task: "Data Product Canvas APIs"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "All Canvas APIs working: GET /canvas, GET /canvas/stats, GET /canvas/{id}, GET /canvas/domain/{domain}"
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
