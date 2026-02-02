@@ -785,81 +785,697 @@ async def seed_database():
     # ============================================
     await db.data_contracts.delete_many({})
     
+    # ============================================
+    # ENHANCED DATA CONTRACTS - Based on Data Contract Specification
+    # ============================================
     data_contracts = [
         {
             "id": "dc1",
+            "contract_name": "Vessel Arrival Status Contract",
+            "version": "2.0.0",
+            "status": "active",
             "data_product_id": "dp1",
-            "version": "1.2.0",
-            "owner": "admin@port.om",
-            "description": "Contract for Vessel Status API with guaranteed SLAs",
-            "schema_definition": {
-                "vessel_id": {"type": "string", "required": True},
-                "vessel_name": {"type": "string", "required": True},
-                "status": {"type": "enum", "values": ["berthed", "approaching", "departing", "unloading"]},
-                "berth_number": {"type": "string", "required": False},
-                "eta": {"type": "datetime", "required": False}
+            "description": "Contract for Vessel Arrival Status data product with comprehensive SLAs and quality guarantees",
+            
+            "provider": {
+                "name": "Port Authority Admin",
+                "email": "admin@port.om",
+                "team": "Port Operations",
+                "domain": "port",
+                "output_port": "s3://data-products/port/vessel-status/v2/"
             },
-            "quality_sla": {
+            
+            "dataset": {
+                "name": "Vessel Arrival Status",
+                "description": "Real-time vessel arrival and berth status for Sohar Port operations. Provides current position, ETA, berth assignments, and cargo information for all vessels.",
+                "domain": "port",
+                "dataset_type": "source-aligned"
+            },
+            
+            "schema_fields": [
+                {
+                    "name": "vessel_id",
+                    "data_type": "string",
+                    "description": "Unique identifier for the vessel (IMO number)",
+                    "business_term": "Vessel Identifier",
+                    "example": "IMO9876543",
+                    "format": "^IMO[0-9]{7}$",
+                    "required": True,
+                    "nullable": False,
+                    "unique": True,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": ["IMO format validation"],
+                    "tags": ["identifier", "vessel"]
+                },
+                {
+                    "name": "vessel_name",
+                    "data_type": "string",
+                    "description": "Official registered name of the vessel",
+                    "business_term": "Vessel Name",
+                    "example": "MV Hydrogen Pioneer",
+                    "format": None,
+                    "required": True,
+                    "nullable": False,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "public",
+                    "constraints": ["Max 100 characters"],
+                    "tags": ["vessel", "name"]
+                },
+                {
+                    "name": "status",
+                    "data_type": "enum",
+                    "description": "Current operational status of the vessel at port",
+                    "business_term": "Vessel Status",
+                    "example": "berthed",
+                    "format": "enum(berthed,approaching,departing,unloading,waiting)",
+                    "required": True,
+                    "nullable": False,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": ["Valid enum value"],
+                    "tags": ["status", "operational"]
+                },
+                {
+                    "name": "berth_number",
+                    "data_type": "string",
+                    "description": "Assigned berth number at Sohar Port",
+                    "business_term": "Berth Assignment",
+                    "example": "B-12",
+                    "format": "^B-[0-9]{1,2}$",
+                    "required": False,
+                    "nullable": True,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": [],
+                    "tags": ["berth", "location"]
+                },
+                {
+                    "name": "eta",
+                    "data_type": "datetime",
+                    "description": "Estimated time of arrival at port",
+                    "business_term": "ETA",
+                    "example": "2025-07-15T08:30:00Z",
+                    "format": "ISO8601",
+                    "required": False,
+                    "nullable": True,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": ["Must be future date for approaching vessels"],
+                    "tags": ["time", "arrival"]
+                },
+                {
+                    "name": "cargo_type",
+                    "data_type": "string",
+                    "description": "Type of hydrogen equipment cargo being transported",
+                    "business_term": "Cargo Classification",
+                    "example": "Electrolyzer Units",
+                    "format": None,
+                    "required": True,
+                    "nullable": False,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": [],
+                    "tags": ["cargo", "hydrogen"]
+                },
+                {
+                    "name": "last_updated",
+                    "data_type": "datetime",
+                    "description": "Timestamp of last status update",
+                    "business_term": "Update Timestamp",
+                    "example": "2025-07-15T10:00:00Z",
+                    "format": "ISO8601",
+                    "required": True,
+                    "nullable": False,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": [],
+                    "tags": ["metadata", "timestamp"]
+                }
+            ],
+            
+            "quality": {
+                "freshness_slo": "15 minutes",
+                "freshness_description": "Data is updated every 15 minutes from AIS feed and port management system",
+                "expected_row_count_min": 5,
+                "expected_row_count_max": 50,
+                "completeness_threshold": 98.0,
+                "accuracy_threshold": 99.5,
+                "validity_rules": [
+                    "vessel_id must be valid IMO format",
+                    "status must be valid enum value",
+                    "ETA must be future date for approaching vessels",
+                    "berth_number required when status is 'berthed'"
+                ],
+                "data_quality_checks": [
+                    "Uniqueness check on vessel_id",
+                    "Referential integrity with vessel registry",
+                    "Timeliness check on last_updated",
+                    "Format validation on all fields"
+                ]
+            },
+            
+            "slo": {
                 "availability": "99.5%",
-                "freshness": "15 minutes",
-                "accuracy": "99.9%",
-                "completeness": "98%"
+                "availability_description": "Measured monthly, excluding scheduled maintenance windows",
+                "latency_p95": "200ms",
+                "latency_p99": "500ms",
+                "throughput": "100 requests/second",
+                "support_hours": "24x7 for critical issues, Business hours (08:00-18:00 UTC+4) for non-critical",
+                "response_time_critical": "1 hour",
+                "response_time_normal": "24 hours",
+                "maintenance_window": "Sundays 02:00-04:00 UTC",
+                "incident_notification": "Email to registered consumers, Slack #port-data-alerts"
             },
-            "terms_of_use": "Data can be used for operational planning and logistics coordination. Attribution required.",
-            "update_frequency": "15min",
-            "retention_period": "2 years",
+            
+            "billing": {
+                "pricing_model": "free",
+                "cost_per_query": None,
+                "monthly_subscription": None,
+                "free_tier_limit": "Unlimited for Oman Hydrogen ecosystem partners",
+                "billing_contact": "billing@port.om",
+                "billing_cycle": "monthly",
+                "currency": "OMR",
+                "cost_center": "PORT-OPS-001"
+            },
+            
+            "terms": {
+                "usage_restrictions": [
+                    "Data must not be shared outside Oman Hydrogen ecosystem",
+                    "No commercial resale permitted",
+                    "Real-time data must not be cached for more than 15 minutes"
+                ],
+                "allowed_purposes": [
+                    "Logistics planning and coordination",
+                    "Supply chain optimization",
+                    "Operational dashboards and reporting",
+                    "Integration with other data products"
+                ],
+                "retention_period": "2 years",
+                "data_residency": "Oman",
+                "licensing": "Oman Hydrogen Data Ecosystem License v1.0",
+                "attribution_required": True,
+                "redistribution_allowed": False,
+                "modification_allowed": True,
+                "change_notice_period": "30 days",
+                "breaking_change_policy": "Major version bump, 60 days deprecation notice, parallel running of old version",
+                "deprecation_policy": "90 days notice before deprecation, migration guide provided"
+            },
+            
+            "consumers": [
+                {
+                    "name": "Asyad Fleet Management",
+                    "team": "Logistics Operations",
+                    "domain": "fleet",
+                    "email": "fleet@asyad.om",
+                    "use_cases": ["Shipment scheduling", "Route optimization", "ETA tracking"],
+                    "approved_date": "2025-01-15",
+                    "access_level": "read"
+                },
+                {
+                    "name": "EPC Site Planning",
+                    "team": "Site Operations",
+                    "domain": "epc",
+                    "email": "site@hydrogen.om",
+                    "use_cases": ["Delivery coordination", "Site readiness planning"],
+                    "approved_date": "2025-01-20",
+                    "access_level": "read"
+                },
+                {
+                    "name": "Control Tower Analytics",
+                    "team": "Central Analytics",
+                    "domain": "analytics",
+                    "email": "analytics@hydrogen.om",
+                    "use_cases": ["Real-time dashboards", "Performance KPIs"],
+                    "approved_date": "2025-02-01",
+                    "access_level": "read"
+                }
+            ],
+            
+            "effective_date": "2025-01-01",
+            "expiry_date": None,
             "created_at": "2025-01-10T10:00:00Z"
         },
         {
             "id": "dc2",
+            "contract_name": "Shipment Tracking Contract",
+            "version": "1.5.0",
+            "status": "active",
             "data_product_id": "dp2",
-            "version": "1.0.0",
-            "owner": "fleet@asyad.om",
-            "description": "Contract for Shipment Tracking API with delivery guarantees",
-            "schema_definition": {
-                "shipment_id": {"type": "string", "required": True},
-                "vessel_id": {"type": "string", "required": True},
-                "component_type": {"type": "string", "required": True},
-                "status": {"type": "enum", "values": ["at_port", "in_transit", "delivered", "pending"]},
-                "destination_site": {"type": "string", "required": True}
+            "description": "Contract for Shipment Tracking data product with delivery guarantees",
+            
+            "provider": {
+                "name": "Asyad Fleet Manager",
+                "email": "fleet@asyad.om",
+                "team": "Fleet Operations",
+                "domain": "fleet",
+                "output_port": "kafka://events.fleet.asyad.om/shipments"
             },
-            "quality_sla": {
+            
+            "dataset": {
+                "name": "Shipment Tracking",
+                "description": "Real-time tracking of hydrogen equipment shipments from port to installation sites. Includes component details, transport status, and delivery estimates.",
+                "domain": "fleet",
+                "dataset_type": "aggregate"
+            },
+            
+            "schema_fields": [
+                {
+                    "name": "shipment_id",
+                    "data_type": "string",
+                    "description": "Unique identifier for the shipment",
+                    "business_term": "Shipment ID",
+                    "example": "SHP-2025-001234",
+                    "format": "^SHP-[0-9]{4}-[0-9]{6}$",
+                    "required": True,
+                    "nullable": False,
+                    "unique": True,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": [],
+                    "tags": ["identifier", "shipment"]
+                },
+                {
+                    "name": "vessel_id",
+                    "data_type": "string",
+                    "description": "Reference to source vessel (foreign key to Vessel Status)",
+                    "business_term": "Source Vessel",
+                    "example": "IMO9876543",
+                    "format": "^IMO[0-9]{7}$",
+                    "required": True,
+                    "nullable": False,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": ["Must exist in Vessel Status data product"],
+                    "tags": ["reference", "vessel"]
+                },
+                {
+                    "name": "component_type",
+                    "data_type": "string",
+                    "description": "Type of hydrogen component being shipped",
+                    "business_term": "Component Type",
+                    "example": "Electrolyzer Stack",
+                    "format": None,
+                    "required": True,
+                    "nullable": False,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": [],
+                    "tags": ["component", "hydrogen"]
+                },
+                {
+                    "name": "status",
+                    "data_type": "enum",
+                    "description": "Current shipment status",
+                    "business_term": "Shipment Status",
+                    "example": "in_transit",
+                    "format": "enum(at_port,loading,in_transit,delivered,pending)",
+                    "required": True,
+                    "nullable": False,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": [],
+                    "tags": ["status"]
+                },
+                {
+                    "name": "destination_site",
+                    "data_type": "string",
+                    "description": "Target installation site ID",
+                    "business_term": "Destination Site",
+                    "example": "DUQM-H2-SITE-01",
+                    "format": None,
+                    "required": True,
+                    "nullable": False,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": ["Must exist in Site Readiness data product"],
+                    "tags": ["destination", "site"]
+                },
+                {
+                    "name": "estimated_delivery",
+                    "data_type": "datetime",
+                    "description": "Estimated delivery date and time",
+                    "business_term": "ETA Delivery",
+                    "example": "2025-07-20T14:00:00Z",
+                    "format": "ISO8601",
+                    "required": True,
+                    "nullable": False,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": [],
+                    "tags": ["time", "delivery"]
+                },
+                {
+                    "name": "driver_contact",
+                    "data_type": "string",
+                    "description": "Driver contact information for delivery coordination",
+                    "business_term": "Driver Contact",
+                    "example": "+968 9XXX XXXX",
+                    "format": "phone",
+                    "required": False,
+                    "nullable": True,
+                    "unique": False,
+                    "sensitive": True,
+                    "is_pii": True,
+                    "classification": "confidential",
+                    "constraints": ["PII - restricted access"],
+                    "tags": ["pii", "contact"]
+                }
+            ],
+            
+            "quality": {
+                "freshness_slo": "30 minutes",
+                "freshness_description": "Data updated from GPS tracking and fleet management system every 30 minutes",
+                "expected_row_count_min": 10,
+                "expected_row_count_max": 200,
+                "completeness_threshold": 95.0,
+                "accuracy_threshold": 99.0,
+                "validity_rules": [
+                    "shipment_id must be unique",
+                    "vessel_id must exist in vessel registry",
+                    "estimated_delivery must be future date for active shipments"
+                ],
+                "data_quality_checks": [
+                    "Uniqueness check on shipment_id",
+                    "Cross-reference with port vessel data",
+                    "GPS coordinate validation",
+                    "PII field masking verification"
+                ]
+            },
+            
+            "slo": {
                 "availability": "99.0%",
-                "freshness": "30 minutes",
-                "accuracy": "99.5%",
-                "completeness": "95%"
+                "availability_description": "Measured monthly, streaming endpoint availability",
+                "latency_p95": "500ms",
+                "latency_p99": "1000ms",
+                "throughput": "50 events/second",
+                "support_hours": "Business hours (08:00-20:00 UTC+4)",
+                "response_time_critical": "2 hours",
+                "response_time_normal": "48 hours",
+                "maintenance_window": "Saturdays 00:00-02:00 UTC",
+                "incident_notification": "Email, SMS for critical issues"
             },
-            "terms_of_use": "Data for supply chain coordination. Notify consumers of breaking changes 30 days in advance.",
-            "update_frequency": "30min",
-            "retention_period": "3 years",
+            
+            "billing": {
+                "pricing_model": "subscription",
+                "cost_per_query": None,
+                "monthly_subscription": "500 OMR",
+                "free_tier_limit": "First 3 months free for ecosystem partners",
+                "billing_contact": "finance@asyad.om",
+                "billing_cycle": "monthly",
+                "currency": "OMR",
+                "cost_center": "FLEET-OPS-002"
+            },
+            
+            "terms": {
+                "usage_restrictions": [
+                    "PII fields require additional approval",
+                    "No real-time location sharing outside ecosystem",
+                    "Driver contact info limited to delivery coordination only"
+                ],
+                "allowed_purposes": [
+                    "Delivery coordination",
+                    "Site readiness planning",
+                    "Supply chain analytics",
+                    "Performance tracking"
+                ],
+                "retention_period": "3 years",
+                "data_residency": "Oman",
+                "licensing": "Oman Hydrogen Data Ecosystem License v1.0",
+                "attribution_required": True,
+                "redistribution_allowed": False,
+                "modification_allowed": True,
+                "change_notice_period": "30 days",
+                "breaking_change_policy": "Semantic versioning, backward compatible for minor versions",
+                "deprecation_policy": "60 days notice, migration support provided"
+            },
+            
+            "consumers": [
+                {
+                    "name": "Port Operations",
+                    "team": "Harbor Master",
+                    "domain": "port",
+                    "email": "admin@port.om",
+                    "use_cases": ["Berth planning", "Vessel coordination"],
+                    "approved_date": "2025-01-12",
+                    "access_level": "read"
+                },
+                {
+                    "name": "EPC Installation Team",
+                    "team": "Site Operations",
+                    "domain": "epc",
+                    "email": "site@hydrogen.om",
+                    "use_cases": ["Delivery scheduling", "Component tracking"],
+                    "approved_date": "2025-01-18",
+                    "access_level": "read"
+                }
+            ],
+            
+            "effective_date": "2025-01-12",
+            "expiry_date": None,
             "created_at": "2025-01-12T10:00:00Z"
         },
         {
             "id": "dc3",
-            "data_product_id": "dp3",
+            "contract_name": "Site Readiness Contract",
             "version": "2.1.0",
-            "owner": "site@hydrogen.om",
-            "description": "Contract for Site Readiness API with installation status",
-            "schema_definition": {
-                "site_id": {"type": "string", "required": True},
-                "site_name": {"type": "string", "required": True},
-                "readiness_status": {"type": "enum", "values": ["ready", "preparing", "installing", "offline"]},
-                "expected_component": {"type": "string", "required": True}
+            "status": "active",
+            "data_product_id": "dp3",
+            "description": "Contract for Site Readiness data product with installation status and capacity information",
+            
+            "provider": {
+                "name": "EPC Site Manager",
+                "email": "site@hydrogen.om",
+                "team": "Site Engineering",
+                "domain": "epc",
+                "output_port": "api://data.hydrogen.om/api/sites/readiness"
             },
-            "quality_sla": {
+            
+            "dataset": {
+                "name": "Site Readiness Status",
+                "description": "Current readiness status of hydrogen installation sites including infrastructure, capacity, and expected equipment. Critical for delivery scheduling and installation planning.",
+                "domain": "epc",
+                "dataset_type": "source-aligned"
+            },
+            
+            "schema_fields": [
+                {
+                    "name": "site_id",
+                    "data_type": "string",
+                    "description": "Unique identifier for the installation site",
+                    "business_term": "Site Identifier",
+                    "example": "DUQM-H2-SITE-01",
+                    "format": "^[A-Z]{4}-H2-SITE-[0-9]{2}$",
+                    "required": True,
+                    "nullable": False,
+                    "unique": True,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": [],
+                    "tags": ["identifier", "site"]
+                },
+                {
+                    "name": "site_name",
+                    "data_type": "string",
+                    "description": "Human-readable name of the site",
+                    "business_term": "Site Name",
+                    "example": "Duqm Green Hydrogen Plant",
+                    "format": None,
+                    "required": True,
+                    "nullable": False,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "public",
+                    "constraints": [],
+                    "tags": ["name", "site"]
+                },
+                {
+                    "name": "readiness_status",
+                    "data_type": "enum",
+                    "description": "Current site readiness status for equipment installation",
+                    "business_term": "Readiness Status",
+                    "example": "ready",
+                    "format": "enum(ready,preparing,installing,commissioning,offline)",
+                    "required": True,
+                    "nullable": False,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": [],
+                    "tags": ["status", "readiness"]
+                },
+                {
+                    "name": "expected_component",
+                    "data_type": "string",
+                    "description": "Next expected component delivery",
+                    "business_term": "Expected Component",
+                    "example": "Electrolyzer Stack Unit 3",
+                    "format": None,
+                    "required": True,
+                    "nullable": False,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": [],
+                    "tags": ["component", "delivery"]
+                },
+                {
+                    "name": "capacity_mw",
+                    "data_type": "float",
+                    "description": "Site capacity in megawatts",
+                    "business_term": "Site Capacity",
+                    "example": "100.5",
+                    "format": "decimal(5,1)",
+                    "required": True,
+                    "nullable": False,
+                    "unique": False,
+                    "sensitive": False,
+                    "is_pii": False,
+                    "classification": "internal",
+                    "constraints": ["Must be positive"],
+                    "tags": ["capacity", "power"]
+                },
+                {
+                    "name": "gps_coordinates",
+                    "data_type": "object",
+                    "description": "Site GPS coordinates",
+                    "business_term": "Location Coordinates",
+                    "example": "{lat: 19.67, lon: 57.71}",
+                    "format": "geo_point",
+                    "required": True,
+                    "nullable": False,
+                    "unique": False,
+                    "sensitive": True,
+                    "is_pii": False,
+                    "classification": "restricted",
+                    "constraints": ["Valid lat/lon range"],
+                    "tags": ["location", "geo"]
+                }
+            ],
+            
+            "quality": {
+                "freshness_slo": "1 hour",
+                "freshness_description": "Site status updated hourly from SCADA systems and manual reporting",
+                "expected_row_count_min": 3,
+                "expected_row_count_max": 20,
+                "completeness_threshold": 97.0,
+                "accuracy_threshold": 99.0,
+                "validity_rules": [
+                    "site_id must be unique and follow naming convention",
+                    "capacity_mw must be positive",
+                    "GPS coordinates must be within Oman boundaries"
+                ],
+                "data_quality_checks": [
+                    "Site ID format validation",
+                    "Geographic boundary check",
+                    "Status transition validation",
+                    "Capacity range check"
+                ]
+            },
+            
+            "slo": {
                 "availability": "98.5%",
-                "freshness": "1 hour",
-                "accuracy": "99.0%",
-                "completeness": "97%"
+                "availability_description": "Measured monthly, API endpoint availability",
+                "latency_p95": "300ms",
+                "latency_p99": "800ms",
+                "throughput": "30 requests/second",
+                "support_hours": "Business hours (08:00-18:00 UTC+4), on-call for critical",
+                "response_time_critical": "4 hours",
+                "response_time_normal": "72 hours",
+                "maintenance_window": "Sundays 04:00-06:00 UTC",
+                "incident_notification": "Email to registered consumers"
             },
-            "terms_of_use": "Data for delivery scheduling. Changes to schema require 60 days notice.",
-            "update_frequency": "1hour",
-            "retention_period": "5 years",
+            
+            "billing": {
+                "pricing_model": "free",
+                "cost_per_query": None,
+                "monthly_subscription": None,
+                "free_tier_limit": "Unlimited for Oman Hydrogen partners",
+                "billing_contact": "finance@hydrogen.om",
+                "billing_cycle": "N/A",
+                "currency": "OMR",
+                "cost_center": "EPC-SITES-003"
+            },
+            
+            "terms": {
+                "usage_restrictions": [
+                    "GPS coordinates restricted to delivery planning only",
+                    "No public disclosure of site locations",
+                    "Capacity data for internal planning only"
+                ],
+                "allowed_purposes": [
+                    "Delivery scheduling",
+                    "Installation planning",
+                    "Capacity planning",
+                    "Operational dashboards"
+                ],
+                "retention_period": "5 years",
+                "data_residency": "Oman",
+                "licensing": "Oman Hydrogen Data Ecosystem License v1.0",
+                "attribution_required": False,
+                "redistribution_allowed": False,
+                "modification_allowed": False,
+                "change_notice_period": "60 days",
+                "breaking_change_policy": "60 days notice for schema changes, parallel API versions",
+                "deprecation_policy": "120 days notice, full migration support"
+            },
+            
+            "consumers": [
+                {
+                    "name": "Fleet Logistics",
+                    "team": "Transport Planning",
+                    "domain": "fleet",
+                    "email": "fleet@asyad.om",
+                    "use_cases": ["Delivery routing", "Schedule optimization"],
+                    "approved_date": "2025-01-08",
+                    "access_level": "read"
+                },
+                {
+                    "name": "Port Authority",
+                    "team": "Operations",
+                    "domain": "port",
+                    "email": "admin@port.om",
+                    "use_cases": ["Berth allocation", "Vessel scheduling"],
+                    "approved_date": "2025-01-10",
+                    "access_level": "read"
+                }
+            ],
+            
+            "effective_date": "2025-01-08",
+            "expiry_date": None,
             "created_at": "2025-01-08T10:00:00Z"
         }
     ]
     await db.data_contracts.insert_many(data_contracts)
-    print(f"Created {len(data_contracts)} data contracts")
+    print(f"Created {len(data_contracts)} enhanced data contracts")
     
     # ============================================
     # DATA AS A PRODUCT - Quality Metrics
