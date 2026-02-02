@@ -389,6 +389,203 @@ class HydrogenDataMeshTester:
         
         return dashboard_success
 
+    # ============================================
+    # DATA PRODUCT CANVAS API TESTS
+    # ============================================
+
+    def test_canvas_apis(self):
+        """Test Data Product Canvas APIs"""
+        print("\n🔍 Testing Data Product Canvas APIs...")
+        
+        # Test GET /api/canvas - Get all data product canvases
+        all_canvases_success, all_canvases = self.run_test(
+            "Get all data product canvases", "GET", "canvas", 200
+        )
+        
+        # Verify response structure for all canvases
+        if all_canvases_success and isinstance(all_canvases, list):
+            print(f"   ✅ Retrieved {len(all_canvases)} canvases")
+            if len(all_canvases) > 0:
+                canvas = all_canvases[0]
+                required_fields = ['id', 'name', 'domain', 'owner_name', 'version', 'classification', 
+                                 'consumers', 'output_ports', 'input_ports', 'data_model', 
+                                 'quality_checks', 'sla', 'security', 'architecture', 'ubiquitous_language']
+                missing_fields = [field for field in required_fields if field not in canvas]
+                if missing_fields:
+                    print(f"   ⚠️  Missing fields in canvas: {missing_fields}")
+                else:
+                    print(f"   ✅ Canvas structure verified - all required fields present")
+        
+        # Test GET /api/canvas/stats - Get canvas statistics
+        stats_success, stats = self.run_test(
+            "Get canvas statistics", "GET", "canvas/stats", 200
+        )
+        
+        # Verify stats structure
+        if stats_success and isinstance(stats, dict):
+            expected_stats = ['total', 'by_status', 'by_classification', 'by_domain']
+            missing_stats = [stat for stat in expected_stats if stat not in stats]
+            if missing_stats:
+                print(f"   ⚠️  Missing stats: {missing_stats}")
+            else:
+                print(f"   ✅ Stats structure verified - total: {stats.get('total', 0)}")
+        
+        # Test GET /api/canvas/{canvas_id} - Get specific canvas (use "canvas1")
+        specific_canvas_success, specific_canvas = self.run_test(
+            "Get specific canvas (canvas1)", "GET", "canvas/canvas1", 200
+        )
+        
+        # Verify specific canvas structure
+        if specific_canvas_success and isinstance(specific_canvas, dict):
+            if specific_canvas.get('name') == 'Vessel Arrival Status':
+                print(f"   ✅ Retrieved correct canvas: {specific_canvas.get('name')}")
+            else:
+                print(f"   ⚠️  Expected 'Vessel Arrival Status', got: {specific_canvas.get('name')}")
+        
+        # Test GET /api/canvas/domain/port - Get canvases by domain
+        domain_canvases_success, domain_canvases = self.run_test(
+            "Get canvases by domain (port)", "GET", "canvas/domain/port", 200
+        )
+        
+        # Verify domain filtering
+        if domain_canvases_success and isinstance(domain_canvases, list):
+            print(f"   ✅ Retrieved {len(domain_canvases)} canvases for port domain")
+            if len(domain_canvases) > 0:
+                # Check if all returned canvases are from port domain
+                non_port_canvases = [c for c in domain_canvases if c.get('domain') != 'port']
+                if non_port_canvases:
+                    print(f"   ⚠️  Found {len(non_port_canvases)} non-port canvases in port domain results")
+                else:
+                    print(f"   ✅ All canvases correctly filtered for port domain")
+        
+        return all_canvases_success and stats_success and specific_canvas_success and domain_canvases_success
+
+    def test_canvas_crud_operations(self):
+        """Test Canvas CRUD operations"""
+        print("\n🔍 Testing Canvas CRUD Operations...")
+        
+        # Create a test canvas
+        test_canvas = {
+            "name": f"Test Canvas {datetime.now().strftime('%H%M%S')}",
+            "domain": "port",
+            "owner_name": "Test Owner",
+            "owner_email": "test@port.om",
+            "date": "2024-12-20",
+            "version": "1.0",
+            "description": "Test data product canvas for API testing",
+            "classification": "source-aligned",
+            "consumers": [
+                {
+                    "name": "Fleet Management",
+                    "domain": "fleet",
+                    "role": "data_consumer",
+                    "use_cases": ["vessel_tracking", "cargo_monitoring"]
+                }
+            ],
+            "use_cases": [
+                {
+                    "name": "Vessel Tracking",
+                    "description": "Track vessel arrivals and departures",
+                    "business_objective": "Improve port efficiency",
+                    "success_metrics": ["reduced_wait_time", "increased_throughput"]
+                }
+            ],
+            "output_ports": [
+                {
+                    "format": "REST API",
+                    "protocol": "HTTPS",
+                    "location": "/api/vessels/status",
+                    "description": "Real-time vessel status updates"
+                }
+            ],
+            "terms": "Internal use only for hydrogen logistics operations",
+            "data_model": [
+                {
+                    "name": "vessel_id",
+                    "data_type": "string",
+                    "description": "Unique vessel identifier",
+                    "constraints": ["not_null", "unique"],
+                    "is_pii": False,
+                    "is_business_key": True,
+                    "is_join_key": True
+                }
+            ],
+            "quality_checks": [
+                {
+                    "check_name": "vessel_id_uniqueness",
+                    "check_type": "uniqueness",
+                    "expression": "COUNT(DISTINCT vessel_id) = COUNT(*)",
+                    "threshold": 1.0,
+                    "description": "Ensure all vessel IDs are unique"
+                }
+            ],
+            "sla": {
+                "availability": "99.9%",
+                "support_hours": "24/7",
+                "retention_period": "2 years",
+                "backup_frequency": "daily",
+                "response_time": "< 100ms"
+            },
+            "security": {
+                "access_level": "internal",
+                "approval_required": False,
+                "allowed_roles": ["port_operator", "fleet_manager"],
+                "allowed_domains": ["port", "fleet"],
+                "pii_handling": "none"
+            },
+            "input_ports": [
+                {
+                    "source_type": "operational_system",
+                    "source_name": "Port Management System",
+                    "source_domain": "port",
+                    "format": "database",
+                    "protocol": "SQL",
+                    "description": "Live vessel data from port systems"
+                }
+            ],
+            "architecture": {
+                "processing_type": "streaming",
+                "framework": "Apache Kafka",
+                "storage_type": "tables",
+                "query_engine": "SQL",
+                "transformation_steps": ["data_validation", "format_standardization", "enrichment"],
+                "scheduling_tool": "Airflow",
+                "monitoring_tool": "Prometheus",
+                "estimated_cost": "$500/month"
+            },
+            "ubiquitous_language": {
+                "vessel": "A ship or boat used for transportation",
+                "berth": "A designated docking space in the port",
+                "eta": "Estimated Time of Arrival"
+            },
+            "status": "draft",
+            "follow_up_actions": ["review_with_stakeholders", "finalize_sla"],
+            "follow_up_date": "2024-12-25"
+        }
+        
+        # Test POST /api/canvas - Create canvas
+        create_success, created_canvas = self.run_test(
+            "Create data product canvas", "POST", "canvas", 200, test_canvas
+        )
+        
+        canvas_id = None
+        if create_success and isinstance(created_canvas, dict):
+            canvas_id = created_canvas.get('id')
+            print(f"   ✅ Canvas created with ID: {canvas_id}")
+        
+        # Test PUT /api/canvas/{canvas_id} - Update canvas (if we have an ID)
+        update_success = True
+        if canvas_id:
+            updated_canvas = test_canvas.copy()
+            updated_canvas['version'] = '1.1'
+            updated_canvas['description'] = 'Updated test canvas description'
+            
+            update_success, update_response = self.run_test(
+                f"Update canvas {canvas_id}", "PUT", f"canvas/{canvas_id}", 200, updated_canvas
+            )
+        
+        return create_success and update_success
+
 def main():
     print("🚀 Starting Oman National Hydrogen Data Mesh API Tests")
     print("=" * 60)
