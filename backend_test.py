@@ -742,6 +742,7 @@ def main():
         # New Data Mesh Enhancement Tests
         ("Domain Journey APIs", tester.test_domain_journey_apis),
         ("Data Contracts APIs", tester.test_data_contracts_apis),
+        ("Enhanced Data Contracts APIs", tester.test_enhanced_data_contracts_apis),
         ("Quality Metrics APIs", tester.test_quality_metrics_apis),
         ("Data Lineage APIs", tester.test_data_lineage_apis),
         ("Platform Capabilities APIs", tester.test_platform_capabilities_apis),
