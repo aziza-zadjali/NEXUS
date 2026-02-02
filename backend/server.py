@@ -1016,30 +1016,182 @@ async def update_domain_level(domain_name: str, new_level: int, current_user: Us
     return {"message": f"Domain {domain_name} updated to level {new_level}"}
 
 # ============================================
-# DATA AS A PRODUCT PRINCIPLE - Data Contracts APIs
+# DATA AS A PRODUCT PRINCIPLE - Enhanced Data Contracts APIs
 # ============================================
 
-@api_router.get("/contracts", response_model=List[DataContract])
+def parse_contract_dates(contract: dict) -> dict:
+    """Parse date strings to datetime objects"""
+    if isinstance(contract.get('created_at'), str):
+        contract['created_at'] = datetime.fromisoformat(contract['created_at'])
+    if isinstance(contract.get('updated_at'), str):
+        contract['updated_at'] = datetime.fromisoformat(contract['updated_at'])
+    return contract
+
+def contract_to_yaml(contract: dict) -> str:
+    """Convert contract to YAML format based on Data Contract Specification"""
+    import yaml
+    
+    yaml_dict = {
+        "dataContractSpecification": "0.9.3",
+        "id": contract.get("id"),
+        "info": {
+            "title": contract.get("contract_name", ""),
+            "version": contract.get("version", "1.0.0"),
+            "status": contract.get("status", "draft"),
+            "description": contract.get("dataset", {}).get("description", "") if isinstance(contract.get("dataset"), dict) else contract.get("description", "")
+        },
+        "provider": contract.get("provider", {}),
+        "dataset": contract.get("dataset", {}),
+        "schema": {
+            "fields": contract.get("schema_fields", [])
+        },
+        "quality": contract.get("quality", {}),
+        "slo": contract.get("slo", {}),
+        "terms": contract.get("terms", {}),
+    }
+    
+    if contract.get("billing"):
+        yaml_dict["billing"] = contract.get("billing")
+    
+    if contract.get("consumers"):
+        yaml_dict["consumers"] = contract.get("consumers")
+    
+    return yaml.dump(yaml_dict, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
+@api_router.get("/contracts")
 async def get_data_contracts(current_user: User = Depends(get_current_user)):
     """Get all data contracts"""
     contracts = await db.data_contracts.find({}, {"_id": 0}).to_list(100)
     for contract in contracts:
-        if isinstance(contract.get('created_at'), str):
-            contract['created_at'] = datetime.fromisoformat(contract['created_at'])
+        parse_contract_dates(contract)
     return contracts
+
+@api_router.get("/contracts/{contract_id}")
+async def get_data_contract(contract_id: str, current_user: User = Depends(get_current_user)):
+    """Get a specific data contract by ID"""
+    contract = await db.data_contracts.find_one({"id": contract_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="Contract not found")
+    return parse_contract_dates(contract)
+
+@api_router.get("/contracts/{contract_id}/yaml")
+async def get_data_contract_yaml(contract_id: str, current_user: User = Depends(get_current_user)):
+    """Get a data contract in YAML format (Data Contract Specification format)"""
+    contract = await db.data_contracts.find_one({"id": contract_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="Contract not found")
+    
+    yaml_content = contract_to_yaml(contract)
+    return {"yaml": yaml_content, "contract_id": contract_id}
 
 @api_router.post("/contracts", response_model=DataContract)
 async def create_data_contract(contract_data: DataContract, current_user: User = Depends(get_current_user)):
     """Create a new data contract for a data product"""
     doc = contract_data.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
+    if doc.get('updated_at'):
+        doc['updated_at'] = doc['updated_at'].isoformat()
     await db.data_contracts.insert_one(doc)
     
+    contract_name = contract_data.contract_name if hasattr(contract_data, 'contract_name') else contract_data.data_product_id
     await log_event("contract_created", "governance", contract_data.id,
-                    f"Data contract v{contract_data.version} created for product {contract_data.data_product_id}",
+                    f"Data contract v{contract_data.version} created: {contract_name}",
                     ["notify_consumers", "update_catalog"])
     
     return contract_data
+
+@api_router.put("/contracts/{contract_id}")
+async def update_data_contract(contract_id: str, contract_data: DataContract, current_user: User = Depends(get_current_user)):
+    """Update an existing data contract"""
+    existing = await db.data_contracts.find_one({"id": contract_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Contract not found")
+    
+    doc = contract_data.model_dump()
+    doc['id'] = contract_id  # Preserve original ID
+    doc['updated_at'] = datetime.now(timezone.utc).isoformat()
+    doc['created_at'] = existing.get('created_at', datetime.now(timezone.utc).isoformat())
+    
+    await db.data_contracts.replace_one({"id": contract_id}, doc)
+    
+    await log_event("contract_updated", "governance", contract_id,
+                    f"Data contract updated to v{contract_data.version}",
+                    ["notify_consumers", "version_update"])
+    
+    return doc
+
+@api_router.delete("/contracts/{contract_id}")
+async def delete_data_contract(contract_id: str, current_user: User = Depends(get_current_user)):
+    """Delete a data contract (soft delete - mark as deprecated)"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.data_contracts.update_one(
+        {"id": contract_id},
+        {"$set": {"status": "deprecated", "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Contract not found")
+    
+    return {"message": f"Contract {contract_id} has been deprecated"}
+
+@api_router.post("/contracts/{contract_id}/consumers")
+async def add_contract_consumer(contract_id: str, consumer: ContractConsumer, current_user: User = Depends(get_current_user)):
+    """Add a consumer to a data contract"""
+    contract = await db.data_contracts.find_one({"id": contract_id})
+    if not contract:
+        raise HTTPException(status_code=404, detail="Contract not found")
+    
+    consumers = contract.get("consumers", [])
+    consumers.append(consumer.model_dump())
+    
+    await db.data_contracts.update_one(
+        {"id": contract_id},
+        {"$set": {"consumers": consumers, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    await log_event("consumer_added", "governance", contract_id,
+                    f"Consumer {consumer.name} added to contract",
+                    ["update_access", "notify_provider"])
+    
+    return {"message": f"Consumer {consumer.name} added to contract"}
+
+@api_router.get("/contracts/stats/summary")
+async def get_contracts_stats(current_user: User = Depends(get_current_user)):
+    """Get contract statistics summary"""
+    contracts = await db.data_contracts.find({}, {"_id": 0}).to_list(100)
+    
+    stats = {
+        "total_contracts": len(contracts),
+        "by_status": {"draft": 0, "active": 0, "deprecated": 0},
+        "by_domain": {},
+        "total_consumers": 0,
+        "avg_schema_fields": 0,
+        "with_billing": 0
+    }
+    
+    total_fields = 0
+    for contract in contracts:
+        status = contract.get("status", "draft")
+        stats["by_status"][status] = stats["by_status"].get(status, 0) + 1
+        
+        domain = contract.get("dataset", {}).get("domain", "unknown") if isinstance(contract.get("dataset"), dict) else "unknown"
+        stats["by_domain"][domain] = stats["by_domain"].get(domain, 0) + 1
+        
+        consumers = contract.get("consumers", [])
+        stats["total_consumers"] += len(consumers)
+        
+        schema_fields = contract.get("schema_fields", [])
+        total_fields += len(schema_fields)
+        
+        if contract.get("billing"):
+            stats["with_billing"] += 1
+    
+    if len(contracts) > 0:
+        stats["avg_schema_fields"] = round(total_fields / len(contracts), 1)
+    
+    return stats
 
 @api_router.get("/quality/metrics", response_model=List[QualityMetric])
 async def get_quality_metrics(current_user: User = Depends(get_current_user)):
