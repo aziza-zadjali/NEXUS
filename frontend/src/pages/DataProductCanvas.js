@@ -21,9 +21,7 @@ function UbiquitousLanguageList({ language }) {
   
   const terms = [];
   for (const key in language) {
-    if (language.hasOwnProperty(key)) {
-      terms.push({ term: key, definition: language[key] });
-    }
+    terms.push({ term: key, definition: language[key] });
   }
   
   return (
