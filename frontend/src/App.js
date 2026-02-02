@@ -67,6 +67,7 @@ function App() {
             <Route path="/domain-journey" element={<ProtectedRoute><DomainJourney /></ProtectedRoute>} />
             <Route path="/contracts" element={<ProtectedRoute><DataContracts /></ProtectedRoute>} />
             <Route path="/platform" element={<ProtectedRoute><PlatformCapabilities /></ProtectedRoute>} />
+            <Route path="/canvas" element={<ProtectedRoute><DataProductCanvas /></ProtectedRoute>} />
           </Routes>
         </BrowserRouter>
         <Toaster position="top-right" />
