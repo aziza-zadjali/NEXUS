@@ -83,6 +83,10 @@ class SiteData(BaseModel):
     site_name: str
     readiness_status: str
     expected_component: str
+    capacity_mw: Optional[int] = None
+    turbines_planned: Optional[int] = None
+    turbines_installed: Optional[int] = None
+    contractor: Optional[str] = None
     last_updated: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class DataProduct(BaseModel):
