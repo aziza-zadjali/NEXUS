@@ -197,6 +197,58 @@ async def seed_database():
             "owner_email": "site@hydrogen.om",
             "tags": ["construction", "readiness", "hydrogen"],
             "created_at": "2025-01-15T10:00:00Z"
+        },
+        {
+            "id": "dp4",
+            "name": "Logistics Routes API",
+            "domain": "logistics",
+            "description": "Transport routes with restrictions and real-time status for wind turbine components",
+            "data_type": "operational",
+            "endpoint": "/api/logistics/routes",
+            "schema_fields": ["route_name", "origin", "destination", "transport_mode", "distance_km", "road_restrictions"],
+            "update_frequency": "1hour",
+            "owner_email": "admin@port.om",
+            "tags": ["routes", "transport", "restrictions", "control-tower"],
+            "created_at": "2025-01-15T11:00:00Z"
+        },
+        {
+            "id": "dp5",
+            "name": "Permit Management API",
+            "domain": "logistics",
+            "description": "Oversized load permits and customs clearances tracking",
+            "data_type": "regulatory",
+            "endpoint": "/api/logistics/permits",
+            "schema_fields": ["permit_number", "permit_type", "shipment_id", "issuing_authority", "status"],
+            "update_frequency": "15min",
+            "owner_email": "admin@port.om",
+            "tags": ["permits", "compliance", "regulatory"],
+            "created_at": "2025-01-15T11:00:00Z"
+        },
+        {
+            "id": "dp6",
+            "name": "Weather Forecasts API",
+            "domain": "logistics",
+            "description": "Real-time weather data for transport safety assessment",
+            "data_type": "environmental",
+            "endpoint": "/api/logistics/weather",
+            "schema_fields": ["location", "forecast_date", "wind_speed_kmh", "weather_condition", "safe_for_transport"],
+            "update_frequency": "30min",
+            "owner_email": "admin@port.om",
+            "tags": ["weather", "safety", "meteorology"],
+            "created_at": "2025-01-15T11:00:00Z"
+        },
+        {
+            "id": "dp7",
+            "name": "Assembly Areas API",
+            "domain": "logistics",
+            "description": "Storage capacity and component inventory at assembly staging areas",
+            "data_type": "operational",
+            "endpoint": "/api/logistics/assembly-areas",
+            "schema_fields": ["area_name", "location", "capacity", "current_occupancy", "components_stored"],
+            "update_frequency": "1hour",
+            "owner_email": "admin@port.om",
+            "tags": ["inventory", "storage", "assembly"],
+            "created_at": "2025-01-15T11:00:00Z"
         }
     ]
     await db.data_catalog.insert_many(data_products)
