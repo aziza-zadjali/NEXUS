@@ -271,7 +271,7 @@ frontend:
         agent: "main"
         comment: "Page working - shows domain maturity levels and journey"
 
-  - task: "Data Contracts Page"
+  - task: "Enhanced Data Contracts Page with YAML export"
     implemented: true
     working: true
     file: "/app/frontend/src/pages/DataContracts.js"
@@ -282,6 +282,9 @@ frontend:
       - working: true
         agent: "main"
         comment: "Page working with contracts, quality metrics, and lineage tabs"
+      - working: true
+        agent: "main"
+        comment: "Enhanced page with comprehensive contract details: Schema tab with field semantics (business_term, PII, Unique flags), Quality tab with freshness SLO and validity rules, SLO tab with availability and support details, Billing tab with pricing model, Terms tab with restrictions and licensing, Consumers tab, YAML export tab with Copy/Download buttons. Stats overview showing total contracts, active count, consumers, avg fields, contracts with billing."
 
   - task: "Platform Capabilities Page"
     implemented: true
