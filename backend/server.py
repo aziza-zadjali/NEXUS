@@ -116,6 +116,49 @@ class AccessPolicy(BaseModel):
     allowed_roles: List[str]
     data_fields_visible: List[str]
 
+class DataContract(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    data_product_id: str
+    version: str
+    owner: str
+    description: str
+    schema_definition: Dict[str, Any]
+    quality_sla: Dict[str, Any]
+    terms_of_use: str
+    update_frequency: str
+    retention_period: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class DomainJourney(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    domain_name: str
+    current_level: int
+    level_description: str
+    data_products_published: int
+    data_products_consumed: int
+    journey_started: str
+    last_updated: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class QualityMetric(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    data_product_id: str
+    metric_type: str
+    value: float
+    threshold: float
+    status: str
+    measured_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class DataLineage(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    source_product_id: str
+    target_product_id: str
+    relationship_type: str
+    transformation_description: str
+
 class EventLog(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
