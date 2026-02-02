@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from './ui/button';
-import { Database, Ship, Package, Building2, Shield, LogOut, LayoutDashboard, Network, Users, FileText, Server } from 'lucide-react';
+import { Database, Ship, Package, Building2, Shield, LogOut, LayoutDashboard, Network, Users, FileText, Server, Layers } from 'lucide-react';
 
 function Layout({ children, user }) {
   const navigate = useNavigate();
@@ -15,6 +15,7 @@ function Layout({ children, user }) {
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/domain-journey', label: 'Domains', icon: Users },
+    { path: '/canvas', label: 'Canvas', icon: Layers },
     { path: '/catalog', label: 'Catalog', icon: Database },
     { path: '/contracts', label: 'Contracts', icon: FileText },
     { path: '/platform', label: 'Platform', icon: Server },
