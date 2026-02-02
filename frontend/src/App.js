@@ -59,7 +59,6 @@ function App() {
             <Route path="/domain/port" element={<ProtectedRoute><DomainPort /></ProtectedRoute>} />
             <Route path="/domain/fleet" element={<ProtectedRoute><DomainFleet /></ProtectedRoute>} />
             <Route path="/domain/epc" element={<ProtectedRoute><DomainEPC /></ProtectedRoute>} />
-            <Route path="/logistics" element={<ProtectedRoute><LogisticsControlTower /></ProtectedRoute>} />
             <Route path="/governance" element={<ProtectedRoute><Governance /></ProtectedRoute>} />
           </Routes>
         </BrowserRouter>
