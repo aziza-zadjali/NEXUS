@@ -532,6 +532,383 @@ async def seed_database():
     await db.assembly_areas.insert_many(assembly_areas)
     print(f"Created {len(assembly_areas)} assembly areas")
     
+    # ============================================
+    # DOMAIN OWNERSHIP - Domain Journey Data
+    # ============================================
+    await db.domain_journeys.delete_many({})
+    
+    domain_journeys = [
+        {
+            "id": "dj1",
+            "domain_name": "port",
+            "current_level": 4,
+            "level_description": "Data Mesh Contributor - Active participant in the mesh ecosystem",
+            "data_products_published": 3,
+            "data_products_consumed": 5,
+            "journey_started": "2024-06-01",
+            "last_updated": "2025-01-15T10:00:00Z"
+        },
+        {
+            "id": "dj2",
+            "domain_name": "fleet",
+            "current_level": 3,
+            "level_description": "Data Producer - Publishing initial data products",
+            "data_products_published": 2,
+            "data_products_consumed": 4,
+            "journey_started": "2024-08-15",
+            "last_updated": "2025-01-15T10:00:00Z"
+        },
+        {
+            "id": "dj3",
+            "domain_name": "epc",
+            "current_level": 2,
+            "level_description": "Data Aware - Understanding data needs and dependencies",
+            "data_products_published": 1,
+            "data_products_consumed": 6,
+            "journey_started": "2024-10-01",
+            "last_updated": "2025-01-15T10:00:00Z"
+        },
+        {
+            "id": "dj4",
+            "domain_name": "logistics",
+            "current_level": 4,
+            "level_description": "Data Mesh Contributor - Active participant in the mesh ecosystem",
+            "data_products_published": 4,
+            "data_products_consumed": 3,
+            "journey_started": "2024-07-01",
+            "last_updated": "2025-01-15T10:00:00Z"
+        }
+    ]
+    await db.domain_journeys.insert_many(domain_journeys)
+    print(f"Created {len(domain_journeys)} domain journeys")
+    
+    # ============================================
+    # DATA AS A PRODUCT - Data Contracts
+    # ============================================
+    await db.data_contracts.delete_many({})
+    
+    data_contracts = [
+        {
+            "id": "dc1",
+            "data_product_id": "dp1",
+            "version": "1.2.0",
+            "owner": "admin@port.om",
+            "description": "Contract for Vessel Status API with guaranteed SLAs",
+            "schema_definition": {
+                "vessel_id": {"type": "string", "required": True},
+                "vessel_name": {"type": "string", "required": True},
+                "status": {"type": "enum", "values": ["berthed", "approaching", "departing", "unloading"]},
+                "berth_number": {"type": "string", "required": False},
+                "eta": {"type": "datetime", "required": False}
+            },
+            "quality_sla": {
+                "availability": "99.5%",
+                "freshness": "15 minutes",
+                "accuracy": "99.9%",
+                "completeness": "98%"
+            },
+            "terms_of_use": "Data can be used for operational planning and logistics coordination. Attribution required.",
+            "update_frequency": "15min",
+            "retention_period": "2 years",
+            "created_at": "2025-01-10T10:00:00Z"
+        },
+        {
+            "id": "dc2",
+            "data_product_id": "dp2",
+            "version": "1.0.0",
+            "owner": "fleet@asyad.om",
+            "description": "Contract for Shipment Tracking API with delivery guarantees",
+            "schema_definition": {
+                "shipment_id": {"type": "string", "required": True},
+                "vessel_id": {"type": "string", "required": True},
+                "component_type": {"type": "string", "required": True},
+                "status": {"type": "enum", "values": ["at_port", "in_transit", "delivered", "pending"]},
+                "destination_site": {"type": "string", "required": True}
+            },
+            "quality_sla": {
+                "availability": "99.0%",
+                "freshness": "30 minutes",
+                "accuracy": "99.5%",
+                "completeness": "95%"
+            },
+            "terms_of_use": "Data for supply chain coordination. Notify consumers of breaking changes 30 days in advance.",
+            "update_frequency": "30min",
+            "retention_period": "3 years",
+            "created_at": "2025-01-12T10:00:00Z"
+        },
+        {
+            "id": "dc3",
+            "data_product_id": "dp3",
+            "version": "2.1.0",
+            "owner": "site@hydrogen.om",
+            "description": "Contract for Site Readiness API with installation status",
+            "schema_definition": {
+                "site_id": {"type": "string", "required": True},
+                "site_name": {"type": "string", "required": True},
+                "readiness_status": {"type": "enum", "values": ["ready", "preparing", "installing", "offline"]},
+                "expected_component": {"type": "string", "required": True}
+            },
+            "quality_sla": {
+                "availability": "98.5%",
+                "freshness": "1 hour",
+                "accuracy": "99.0%",
+                "completeness": "97%"
+            },
+            "terms_of_use": "Data for delivery scheduling. Changes to schema require 60 days notice.",
+            "update_frequency": "1hour",
+            "retention_period": "5 years",
+            "created_at": "2025-01-08T10:00:00Z"
+        }
+    ]
+    await db.data_contracts.insert_many(data_contracts)
+    print(f"Created {len(data_contracts)} data contracts")
+    
+    # ============================================
+    # DATA AS A PRODUCT - Quality Metrics
+    # ============================================
+    await db.quality_metrics.delete_many({})
+    
+    quality_metrics = [
+        {
+            "id": "qm1",
+            "data_product_id": "dp1",
+            "metric_type": "availability",
+            "value": 99.7,
+            "threshold": 99.5,
+            "status": "healthy",
+            "measured_at": "2025-01-15T12:00:00Z"
+        },
+        {
+            "id": "qm2",
+            "data_product_id": "dp1",
+            "metric_type": "freshness",
+            "value": 12.5,
+            "threshold": 15.0,
+            "status": "healthy",
+            "measured_at": "2025-01-15T12:00:00Z"
+        },
+        {
+            "id": "qm3",
+            "data_product_id": "dp2",
+            "metric_type": "availability",
+            "value": 98.2,
+            "threshold": 99.0,
+            "status": "warning",
+            "measured_at": "2025-01-15T12:00:00Z"
+        },
+        {
+            "id": "qm4",
+            "data_product_id": "dp2",
+            "metric_type": "accuracy",
+            "value": 99.8,
+            "threshold": 99.5,
+            "status": "healthy",
+            "measured_at": "2025-01-15T12:00:00Z"
+        },
+        {
+            "id": "qm5",
+            "data_product_id": "dp3",
+            "metric_type": "completeness",
+            "value": 96.5,
+            "threshold": 97.0,
+            "status": "warning",
+            "measured_at": "2025-01-15T12:00:00Z"
+        }
+    ]
+    await db.quality_metrics.insert_many(quality_metrics)
+    print(f"Created {len(quality_metrics)} quality metrics")
+    
+    # ============================================
+    # DATA AS A PRODUCT - Data Lineage
+    # ============================================
+    await db.data_lineages.delete_many({})
+    
+    data_lineages = [
+        {
+            "id": "dl1",
+            "source_product_id": "dp1",
+            "target_product_id": "dp2",
+            "relationship_type": "feeds",
+            "transformation_description": "Vessel data enriches shipment tracking with arrival information"
+        },
+        {
+            "id": "dl2",
+            "source_product_id": "dp2",
+            "target_product_id": "dp3",
+            "relationship_type": "triggers",
+            "transformation_description": "Shipment status updates trigger site readiness checks"
+        },
+        {
+            "id": "dl3",
+            "source_product_id": "dp4",
+            "target_product_id": "dp5",
+            "relationship_type": "requires",
+            "transformation_description": "Route planning requires permit validation"
+        }
+    ]
+    await db.data_lineages.insert_many(data_lineages)
+    print(f"Created {len(data_lineages)} data lineages")
+    
+    # ============================================
+    # SELF-SERVE PLATFORM - Platform Capabilities
+    # ============================================
+    await db.platform_capabilities.delete_many({})
+    
+    platform_capabilities = [
+        {
+            "id": "pc1",
+            "name": "Data Product Builder",
+            "category": "Creation",
+            "description": "Low-code tool for domain teams to create and publish data products",
+            "features": ["Schema designer", "API endpoint generator", "Documentation auto-generation", "Version management"],
+            "status": "active",
+            "usage_count": 45
+        },
+        {
+            "id": "pc2",
+            "name": "Data Catalog Explorer",
+            "category": "Discovery",
+            "description": "Search and discover data products across all domains",
+            "features": ["Full-text search", "Tag filtering", "Schema preview", "Consumer tracking"],
+            "status": "active",
+            "usage_count": 128
+        },
+        {
+            "id": "pc3",
+            "name": "Quality Monitor",
+            "category": "Observability",
+            "description": "Real-time monitoring of data product quality metrics",
+            "features": ["SLA tracking", "Freshness alerts", "Accuracy monitoring", "Trend analysis"],
+            "status": "active",
+            "usage_count": 67
+        },
+        {
+            "id": "pc4",
+            "name": "Contract Manager",
+            "category": "Governance",
+            "description": "Create and manage data contracts with versioning",
+            "features": ["Contract templates", "Version control", "Breaking change detection", "Consumer notifications"],
+            "status": "active",
+            "usage_count": 23
+        },
+        {
+            "id": "pc5",
+            "name": "Lineage Visualizer",
+            "category": "Observability",
+            "description": "Visual representation of data flow across domains",
+            "features": ["Interactive graph", "Impact analysis", "Dependency tracking", "Change propagation"],
+            "status": "active",
+            "usage_count": 34
+        },
+        {
+            "id": "pc6",
+            "name": "Access Control Manager",
+            "category": "Security",
+            "description": "Configure and manage data access policies",
+            "features": ["ABAC policies", "Role management", "Audit logging", "Field-level security"],
+            "status": "active",
+            "usage_count": 19
+        }
+    ]
+    await db.platform_capabilities.insert_many(platform_capabilities)
+    print(f"Created {len(platform_capabilities)} platform capabilities")
+    
+    # ============================================
+    # FEDERATED GOVERNANCE - Compliance Rules
+    # ============================================
+    await db.compliance_rules.delete_many({})
+    
+    compliance_rules = [
+        {
+            "id": "cr1",
+            "rule_name": "Data Retention Policy",
+            "standard": "Oman Data Protection",
+            "description": "All operational data must have defined retention periods",
+            "severity": "high",
+            "applicable_domains": ["port", "fleet", "epc", "logistics"],
+            "validation_logic": "contract.retention_period IS NOT NULL AND contract.retention_period >= '1 year'",
+            "status": "active"
+        },
+        {
+            "id": "cr2",
+            "rule_name": "Schema Documentation",
+            "standard": "IDS",
+            "description": "All data products must have complete schema documentation",
+            "severity": "medium",
+            "applicable_domains": ["port", "fleet", "epc", "logistics"],
+            "validation_logic": "product.schema_fields.length > 0 AND product.description IS NOT NULL",
+            "status": "active"
+        },
+        {
+            "id": "cr3",
+            "rule_name": "Quality SLA Compliance",
+            "standard": "Gaia-X",
+            "description": "Data products must meet minimum quality thresholds",
+            "severity": "high",
+            "applicable_domains": ["port", "fleet", "epc"],
+            "validation_logic": "metric.value >= metric.threshold",
+            "status": "active"
+        },
+        {
+            "id": "cr4",
+            "rule_name": "Access Policy Required",
+            "standard": "ABAC",
+            "description": "Every domain must have explicit access policies defined",
+            "severity": "critical",
+            "applicable_domains": ["port", "fleet", "epc", "logistics"],
+            "validation_logic": "policy.allowed_domains.length > 0 AND policy.allowed_roles.length > 0",
+            "status": "active"
+        }
+    ]
+    await db.compliance_rules.insert_many(compliance_rules)
+    print(f"Created {len(compliance_rules)} compliance rules")
+    
+    # ============================================
+    # FEDERATED GOVERNANCE - Interoperability Standards
+    # ============================================
+    await db.interop_standards.delete_many({})
+    
+    interop_standards = [
+        {
+            "id": "is1",
+            "name": "International Data Spaces (IDS)",
+            "version": "4.0",
+            "description": "Reference architecture for secure, sovereign data exchange",
+            "supported_domains": ["port", "fleet", "logistics"],
+            "compliance_level": "Full",
+            "certification_date": "2024-11-15"
+        },
+        {
+            "id": "is2",
+            "name": "Gaia-X",
+            "version": "22.10",
+            "description": "European data infrastructure framework for trustworthy data ecosystems",
+            "supported_domains": ["port", "fleet", "epc", "logistics"],
+            "compliance_level": "Partial",
+            "certification_date": "2024-09-20"
+        },
+        {
+            "id": "is3",
+            "name": "Oman National Data Standards",
+            "version": "1.0",
+            "description": "National standards for government and industrial data exchange",
+            "supported_domains": ["port", "fleet", "epc", "logistics"],
+            "compliance_level": "Full",
+            "certification_date": "2025-01-01"
+        },
+        {
+            "id": "is4",
+            "name": "OpenAPI Specification",
+            "version": "3.1.0",
+            "description": "Standard for API documentation and interoperability",
+            "supported_domains": ["port", "fleet", "epc", "logistics"],
+            "compliance_level": "Full",
+            "certification_date": None
+        }
+    ]
+    await db.interop_standards.insert_many(interop_standards)
+    print(f"Created {len(interop_standards)} interoperability standards")
+    
     print("Database seeding completed successfully!")
     client.close()
 
