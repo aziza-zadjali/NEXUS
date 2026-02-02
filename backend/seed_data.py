@@ -82,6 +82,16 @@ async def seed_database():
             "eta": "2025-01-22T14:00:00Z",
             "cargo_type": "nacelles",
             "last_updated": "2025-01-15T12:00:00Z"
+        },
+        {
+            "id": "v3",
+            "vessel_id": "SAL-V103",
+            "vessel_name": "Wind Turbine Express",
+            "status": "unloading",
+            "berth_number": "B-7",
+            "eta": "2025-01-15T06:00:00Z",
+            "cargo_type": "tower_sections",
+            "last_updated": "2025-01-15T14:00:00Z"
         }
     ]
     await db.port_vessels.insert_many(vessels)
@@ -105,6 +115,15 @@ async def seed_database():
             "status": "in_transit",
             "destination_site": "Duqm Hydrogen Hub B",
             "last_updated": "2025-01-15T12:00:00Z"
+        },
+        {
+            "id": "s3",
+            "shipment_id": "SHP-2025-003",
+            "vessel_id": "SAL-V103",
+            "component_type": "tower_section",
+            "status": "at_port",
+            "destination_site": "Duqm Hydrogen Hub A",
+            "last_updated": "2025-01-15T14:00:00Z"
         }
     ]
     await db.fleet_shipments.insert_many(shipments)
@@ -126,6 +145,14 @@ async def seed_database():
             "readiness_status": "preparing",
             "expected_component": "nacelle",
             "last_updated": "2025-01-15T12:00:00Z"
+        },
+        {
+            "id": "site3",
+            "site_id": "DHH-C",
+            "site_name": "Duqm Hydrogen Hub C",
+            "readiness_status": "installing",
+            "expected_component": "tower_section",
+            "last_updated": "2025-01-15T13:00:00Z"
         }
     ]
     await db.epc_sites.insert_many(sites)
