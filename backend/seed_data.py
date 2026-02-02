@@ -568,39 +568,61 @@ async def seed_database():
     await db.weather_forecasts.insert_many(weather_forecasts)
     print(f"Created {len(weather_forecasts)} weather forecasts")
     
+    # ============================================
+    # ASSEMBLY AREAS - Primary & Secondary per Asyad Flow
+    # ============================================
     assembly_areas = [
         {
             "id": "area1",
-            "area_name": "Main Assembly Area - Duqm",
+            "area_name": "Primary Assembly Area - Thumrait",
             "area_type": "Primary",
-            "location": "Duqm Special Economic Zone",
-            "capacity": 50,
-            "current_occupancy": 32,
-            "available_space": 18,
+            "location": "Thumrait Industrial Zone, Dhofar",
+            "capacity": 80,
+            "current_occupancy": 45,
+            "available_space": 35,
             "status": "available",
-            "components_stored": ["Turbine Blades (12)", "Tower Sections (8)", "Nacelles (12)"]
+            "components_stored": ["Turbine Blades x18", "Tower Sections x24", "Nacelles x6"],
+            "stakeholder": "Asyad Logistics",
+            "coordinates": {"lat": 17.64, "lon": 54.02}
         },
         {
             "id": "area2",
-            "area_name": "Secondary Assembly - Salalah",
-            "area_type": "Secondary",
-            "location": "Port of Salalah Free Zone",
-            "capacity": 30,
-            "current_occupancy": 18,
-            "available_space": 12,
+            "area_name": "Primary Assembly Area - Duqm SEZ",
+            "area_type": "Primary",
+            "location": "Duqm Special Economic Zone",
+            "capacity": 60,
+            "current_occupancy": 38,
+            "available_space": 22,
             "status": "available",
-            "components_stored": ["Generators (6)", "Control Systems (12)"]
+            "components_stored": ["Turbine Blades x12", "Generator Units x8", "Control Systems x15"],
+            "stakeholder": "Asyad Logistics",
+            "coordinates": {"lat": 19.52, "lon": 57.70}
         },
         {
             "id": "area3",
-            "area_name": "Staging Area - Hub B",
-            "area_type": "Staging",
-            "location": "Near Duqm Hydrogen Hub B",
+            "area_name": "Secondary Assembly - Site Alpha",
+            "area_type": "Secondary",
+            "location": "Near Dhofar Wind Farm Block A",
+            "capacity": 25,
+            "current_occupancy": 22,
+            "available_space": 3,
+            "status": "near_capacity",
+            "components_stored": ["Tower Sections x16", "Blade Adapters x6"],
+            "stakeholder": "GE Renewable Energy",
+            "coordinates": {"lat": 17.03, "lon": 54.13}
+        },
+        {
+            "id": "area4",
+            "area_name": "Secondary Assembly - Site Beta",
+            "area_type": "Secondary",
+            "location": "Near Dhofar Wind Farm Block B",
             "capacity": 20,
-            "current_occupancy": 19,
-            "available_space": 1,
-            "status": "full",
-            "components_stored": ["Tower Sections (15)", "Cables (4)"]
+            "current_occupancy": 8,
+            "available_space": 12,
+            "status": "available",
+            "components_stored": ["Foundation Bolts x100", "Cables x12"],
+            "stakeholder": "Siemens Gamesa",
+            "coordinates": {"lat": 17.08, "lon": 54.18}
         }
     ]
     await db.assembly_areas.insert_many(assembly_areas)
