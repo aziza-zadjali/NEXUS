@@ -120,13 +120,13 @@ backend:
         agent: "testing"
         comment: "✅ PASSED - Both GET /api/domains/journey and GET /api/domains/journey/port endpoints working correctly. Returns domain maturity levels, journey progress, and data product counts. Authentication working properly."
 
-  - task: "Data Contracts API - GET/POST /api/contracts"
+  - task: "Enhanced Data Contracts API - Full CRUD with YAML export"
     implemented: true
     working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
@@ -134,6 +134,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ PASSED - Both GET and POST /api/contracts endpoints working correctly. Successfully created test contract with schema definition, quality SLAs, and terms of use. Returns proper contract data with timestamps."
+      - working: "NA"
+        agent: "main"
+        comment: "Enhanced Data Contract module with comprehensive Data Contract Specification support: Provider info (owner, team, output_port), Schema with semantics (business_term, PII, classification), Quality attributes (freshness_slo, validity_rules), SLOs (availability, latency, support hours), Billing details, Terms (restrictions, allowed_purposes, licensing), Consumer tracking. Added new endpoints: GET /contracts/{id}, GET /contracts/{id}/yaml, PUT /contracts/{id}, DELETE /contracts/{id}, POST /contracts/{id}/consumers, GET /contracts/stats/summary"
 
   - task: "Quality Metrics API - GET/POST /api/quality/metrics"
     implemented: true
