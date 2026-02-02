@@ -534,6 +534,203 @@ async def seed_database():
     print(f"Created {len(assembly_areas)} assembly areas")
     
     # ============================================
+    # DATA PRODUCT CANVAS - Complete Canvas Examples
+    # ============================================
+    
+    data_product_canvases = [
+        {
+            "id": "canvas1",
+            "name": "Vessel Arrival Status",
+            "domain": "port",
+            "owner_name": "Port Authority Admin",
+            "owner_email": "admin@port.om",
+            "date": "2025-01-15",
+            "version": "2.1.0",
+            "description": "Real-time vessel arrival and departure status for the Port of Duqm. Provides current berth assignments, ETAs, and vessel details for hydrogen component logistics.",
+            "classification": "source-aligned",
+            "consumers": [
+                {"name": "Fleet Operations", "domain": "fleet", "role": "consumer", "use_cases": ["shipment_planning", "delivery_scheduling"]},
+                {"name": "Logistics Control Tower", "domain": "logistics", "role": "consumer", "use_cases": ["route_optimization", "capacity_planning"]},
+                {"name": "Site Installation Team", "domain": "epc", "role": "consumer", "use_cases": ["delivery_reception", "installation_scheduling"]}
+            ],
+            "use_cases": [
+                {"name": "Shipment Coordination", "description": "Coordinate vessel arrivals with land transport for hydrogen components", "business_objective": "Minimize port dwell time", "success_metrics": ["Average dwell time < 24h", "On-time departure rate > 95%"]},
+                {"name": "Berth Optimization", "description": "Optimize berth allocation for hydrogen component vessels", "business_objective": "Maximize port throughput", "success_metrics": ["Berth utilization > 80%", "Queue time < 4h"]}
+            ],
+            "output_ports": [
+                {"format": "REST API", "protocol": "HTTPS", "location": "/api/port/vessels", "description": "Real-time vessel status endpoint"},
+                {"format": "Parquet", "protocol": "S3", "location": "s3://hydrogen-data/port/vessels/", "description": "Daily vessel snapshots for analytics"}
+            ],
+            "terms": "Data available for all Oman Hydrogen Project participants. Attribution required for external use. Data retention: 2 years. No commercial redistribution.",
+            "data_model": [
+                {"name": "vessel_id", "data_type": "string", "description": "Unique vessel identifier (IMO number)", "constraints": ["NOT NULL", "UNIQUE"], "is_pii": False, "is_business_key": True, "is_join_key": True},
+                {"name": "vessel_name", "data_type": "string", "description": "Official vessel name", "constraints": ["NOT NULL"], "is_pii": False, "is_business_key": False, "is_join_key": False},
+                {"name": "status", "data_type": "enum", "description": "Current vessel status", "constraints": ["IN ('berthed', 'approaching', 'departing', 'unloading')"], "is_pii": False, "is_business_key": False, "is_join_key": False},
+                {"name": "berth_number", "data_type": "string", "description": "Assigned berth location", "constraints": [], "is_pii": False, "is_business_key": False, "is_join_key": False},
+                {"name": "eta", "data_type": "datetime", "description": "Estimated time of arrival", "constraints": [], "is_pii": False, "is_business_key": False, "is_join_key": False},
+                {"name": "cargo_type", "data_type": "string", "description": "Type of hydrogen components being transported", "constraints": [], "is_pii": False, "is_business_key": False, "is_join_key": False}
+            ],
+            "quality_checks": [
+                {"check_name": "vessel_id_uniqueness", "check_type": "uniqueness", "expression": "COUNT(DISTINCT vessel_id) = COUNT(*)", "threshold": 100.0, "description": "Each vessel should have a unique ID"},
+                {"check_name": "status_freshness", "check_type": "freshness", "expression": "MAX(last_updated) > NOW() - INTERVAL '15 minutes'", "threshold": None, "description": "Data should be updated within 15 minutes"},
+                {"check_name": "eta_validity", "check_type": "validity", "expression": "eta >= NOW() OR status IN ('berthed', 'departing')", "threshold": 95.0, "description": "ETA should be in the future unless vessel is already present"}
+            ],
+            "sla": {"availability": "99.5%", "support_hours": "24/7", "retention_period": "2 years", "backup_frequency": "Daily", "response_time": "< 500ms"},
+            "security": {"access_level": "internal", "approval_required": False, "allowed_roles": ["admin", "editor", "viewer"], "allowed_domains": ["port", "fleet", "epc", "logistics"], "pii_handling": "No PII present"},
+            "input_ports": [
+                {"source_type": "operational_system", "source_name": "Port Management System", "source_domain": "port", "format": "PostgreSQL", "protocol": "CDC", "description": "Real-time vessel tracking from port operations"},
+                {"source_type": "operational_system", "source_name": "AIS System", "source_domain": "port", "format": "Stream", "protocol": "Kafka", "description": "Automatic Identification System vessel positions"}
+            ],
+            "architecture": {
+                "processing_type": "streaming",
+                "framework": "Apache Flink",
+                "storage_type": "tables",
+                "query_engine": "SQL",
+                "transformation_steps": ["Ingestion from PMS", "AIS enrichment", "Status calculation", "ETA prediction"],
+                "scheduling_tool": "Airflow",
+                "monitoring_tool": "Grafana",
+                "estimated_cost": "$2,500/month"
+            },
+            "ubiquitous_language": {
+                "Berth": "A designated location at the port where vessels can dock for loading/unloading",
+                "ETA": "Estimated Time of Arrival - predicted arrival time based on AIS data",
+                "IMO Number": "International Maritime Organization unique vessel identifier",
+                "Dwell Time": "Duration a vessel spends at port from arrival to departure"
+            },
+            "status": "active",
+            "created_at": "2025-01-10T10:00:00Z",
+            "follow_up_actions": ["Add weather impact on ETA", "Integrate with berth scheduling system"],
+            "follow_up_date": "2025-02-15"
+        },
+        {
+            "id": "canvas2",
+            "name": "Hydrogen Component Shipments",
+            "domain": "fleet",
+            "owner_name": "Asyad Fleet Manager",
+            "owner_email": "fleet@asyad.om",
+            "date": "2025-01-12",
+            "version": "1.5.0",
+            "description": "Tracking data for hydrogen components being transported from port to installation sites. Includes shipment status, location, and delivery estimates.",
+            "classification": "aggregate",
+            "consumers": [
+                {"name": "Site Installation Team", "domain": "epc", "role": "consumer", "use_cases": ["delivery_tracking", "installation_planning"]},
+                {"name": "Logistics Control Tower", "domain": "logistics", "role": "consumer", "use_cases": ["route_monitoring", "delay_prediction"]}
+            ],
+            "use_cases": [
+                {"name": "Component Delivery Tracking", "description": "Track hydrogen components from port to installation site", "business_objective": "Ensure on-time delivery", "success_metrics": ["On-time delivery > 90%", "Component damage < 0.1%"]},
+                {"name": "Fleet Utilization", "description": "Optimize truck and trailer allocation for component transport", "business_objective": "Maximize fleet efficiency", "success_metrics": ["Fleet utilization > 75%", "Empty runs < 10%"]}
+            ],
+            "output_ports": [
+                {"format": "REST API", "protocol": "HTTPS", "location": "/api/fleet/shipments", "description": "Real-time shipment tracking API"},
+                {"format": "Delta Lake", "protocol": "S3", "location": "s3://hydrogen-data/fleet/shipments/", "description": "Historical shipment data for analytics"}
+            ],
+            "terms": "Data available to authorized Oman Hydrogen Project members. Location data aggregated to regional level for security. 3-year retention for compliance.",
+            "data_model": [
+                {"name": "shipment_id", "data_type": "string", "description": "Unique shipment identifier", "constraints": ["NOT NULL", "UNIQUE"], "is_pii": False, "is_business_key": True, "is_join_key": True},
+                {"name": "vessel_id", "data_type": "string", "description": "Source vessel IMO number", "constraints": ["NOT NULL"], "is_pii": False, "is_business_key": False, "is_join_key": True},
+                {"name": "component_type", "data_type": "string", "description": "Type of hydrogen component (Electrolyzer, Tower, Blade, etc.)", "constraints": ["NOT NULL"], "is_pii": False, "is_business_key": False, "is_join_key": False},
+                {"name": "status", "data_type": "enum", "description": "Current shipment status", "constraints": ["IN ('at_port', 'in_transit', 'delivered', 'pending')"], "is_pii": False, "is_business_key": False, "is_join_key": False},
+                {"name": "destination_site", "data_type": "string", "description": "Target installation site ID", "constraints": ["NOT NULL"], "is_pii": False, "is_business_key": False, "is_join_key": True},
+                {"name": "driver_id", "data_type": "string", "description": "Assigned driver identifier", "constraints": [], "is_pii": True, "is_business_key": False, "is_join_key": False}
+            ],
+            "quality_checks": [
+                {"check_name": "shipment_completeness", "check_type": "completeness", "expression": "component_type IS NOT NULL AND destination_site IS NOT NULL", "threshold": 100.0, "description": "All shipments must have component type and destination"},
+                {"check_name": "status_consistency", "check_type": "consistency", "expression": "status = 'delivered' IMPLIES actual_delivery_time IS NOT NULL", "threshold": 99.0, "description": "Delivered shipments must have delivery time recorded"}
+            ],
+            "sla": {"availability": "99.0%", "support_hours": "Business hours (8AM-6PM GST)", "retention_period": "3 years", "backup_frequency": "Hourly", "response_time": "< 1s"},
+            "security": {"access_level": "restricted", "approval_required": True, "allowed_roles": ["admin", "editor"], "allowed_domains": ["fleet", "epc", "logistics"], "pii_handling": "Driver ID masked for non-fleet users"},
+            "input_ports": [
+                {"source_type": "data_product", "source_name": "Vessel Arrival Status", "source_domain": "port", "format": "REST API", "protocol": "HTTPS", "description": "Vessel arrival data for shipment initiation"},
+                {"source_type": "operational_system", "source_name": "Fleet TMS", "source_domain": "fleet", "format": "PostgreSQL", "protocol": "CDC", "description": "Transport Management System shipment records"},
+                {"source_type": "operational_system", "source_name": "GPS Tracking", "source_domain": "fleet", "format": "Stream", "protocol": "MQTT", "description": "Real-time vehicle location data"}
+            ],
+            "architecture": {
+                "processing_type": "hybrid",
+                "framework": "Databricks",
+                "storage_type": "Delta Lake",
+                "query_engine": "SQL",
+                "transformation_steps": ["Ingest from TMS", "Join vessel data", "GPS enrichment", "Status aggregation", "ETA calculation"],
+                "scheduling_tool": "Databricks Workflows",
+                "monitoring_tool": "Soda",
+                "estimated_cost": "$3,200/month"
+            },
+            "ubiquitous_language": {
+                "Component": "A major hydrogen production equipment piece (Electrolyzer, Tower Section, Blade, Cable)",
+                "TMS": "Transport Management System - operational system for fleet coordination",
+                "In Transit": "Shipment has departed port and is en route to destination",
+                "Oversized Load": "Component requiring special permits due to dimensions exceeding standard limits"
+            },
+            "status": "active",
+            "created_at": "2025-01-12T10:00:00Z",
+            "follow_up_actions": ["Add predictive ETA model", "Integrate weather delays"],
+            "follow_up_date": "2025-03-01"
+        },
+        {
+            "id": "canvas3",
+            "name": "Site Installation Readiness",
+            "domain": "epc",
+            "owner_name": "EPC Site Manager",
+            "owner_email": "site@hydrogen.om",
+            "date": "2025-01-08",
+            "version": "1.2.0",
+            "description": "Installation site readiness status for receiving and installing hydrogen production components. Includes foundation status, crew availability, and equipment readiness.",
+            "classification": "consumer-aligned",
+            "consumers": [
+                {"name": "Fleet Operations", "domain": "fleet", "role": "consumer", "use_cases": ["delivery_scheduling", "route_planning"]},
+                {"name": "Project Management", "domain": "logistics", "role": "consumer", "use_cases": ["progress_tracking", "milestone_reporting"]}
+            ],
+            "use_cases": [
+                {"name": "Delivery Coordination", "description": "Ensure site is ready before component delivery arrives", "business_objective": "Zero delivery rejections", "success_metrics": ["Rejection rate = 0%", "Site ready 24h before arrival"]},
+                {"name": "Installation Scheduling", "description": "Schedule installation crews based on component arrivals", "business_objective": "Maximize crew utilization", "success_metrics": ["Crew utilization > 85%", "Installation delays < 5%"]}
+            ],
+            "output_ports": [
+                {"format": "REST API", "protocol": "HTTPS", "location": "/api/epc/sites", "description": "Site readiness status endpoint"},
+                {"format": "Dashboard", "protocol": "HTTPS", "location": "/dashboard/sites", "description": "Visual site status dashboard"}
+            ],
+            "terms": "Internal project use only. Site location data classified as confidential. Weekly data refresh for analytics.",
+            "data_model": [
+                {"name": "site_id", "data_type": "string", "description": "Unique site identifier", "constraints": ["NOT NULL", "UNIQUE"], "is_pii": False, "is_business_key": True, "is_join_key": True},
+                {"name": "site_name", "data_type": "string", "description": "Human-readable site name", "constraints": ["NOT NULL"], "is_pii": False, "is_business_key": False, "is_join_key": False},
+                {"name": "readiness_status", "data_type": "enum", "description": "Current site readiness level", "constraints": ["IN ('ready', 'preparing', 'installing', 'offline')"], "is_pii": False, "is_business_key": False, "is_join_key": False},
+                {"name": "expected_component", "data_type": "string", "description": "Next component expected at site", "constraints": [], "is_pii": False, "is_business_key": False, "is_join_key": False},
+                {"name": "crew_count", "data_type": "integer", "description": "Number of installation crew members on site", "constraints": [">=0"], "is_pii": False, "is_business_key": False, "is_join_key": False}
+            ],
+            "quality_checks": [
+                {"check_name": "site_id_uniqueness", "check_type": "uniqueness", "expression": "COUNT(DISTINCT site_id) = COUNT(*)", "threshold": 100.0, "description": "Each site must have unique ID"},
+                {"check_name": "status_freshness", "check_type": "freshness", "expression": "MAX(last_updated) > NOW() - INTERVAL '1 hour'", "threshold": None, "description": "Status should be updated hourly"}
+            ],
+            "sla": {"availability": "98.5%", "support_hours": "Business hours", "retention_period": "5 years", "backup_frequency": "Daily", "response_time": "< 2s"},
+            "security": {"access_level": "confidential", "approval_required": True, "allowed_roles": ["admin", "editor"], "allowed_domains": ["epc", "logistics"], "pii_handling": "Location coordinates restricted"},
+            "input_ports": [
+                {"source_type": "operational_system", "source_name": "Site Management System", "source_domain": "epc", "format": "PostgreSQL", "protocol": "JDBC", "description": "Site operational data"},
+                {"source_type": "operational_system", "source_name": "Crew Management", "source_domain": "epc", "format": "REST API", "protocol": "HTTPS", "description": "Crew scheduling and availability"}
+            ],
+            "architecture": {
+                "processing_type": "batch",
+                "framework": "dbt",
+                "storage_type": "tables",
+                "query_engine": "SQL",
+                "transformation_steps": ["Extract site data", "Join crew data", "Calculate readiness score", "Publish to API"],
+                "scheduling_tool": "Airflow",
+                "monitoring_tool": "Great Expectations",
+                "estimated_cost": "$1,800/month"
+            },
+            "ubiquitous_language": {
+                "Readiness Score": "Calculated metric (0-100) indicating site preparedness for installation",
+                "Foundation Ready": "Site concrete foundation has cured and is ready for equipment installation",
+                "Crew Availability": "Percentage of required installation crew currently on site"
+            },
+            "status": "active",
+            "created_at": "2025-01-08T10:00:00Z",
+            "follow_up_actions": ["Add weather impact assessment", "Integrate supply chain data"],
+            "follow_up_date": "2025-02-28"
+        }
+    ]
+    
+    await db.data_product_canvases.insert_many(data_product_canvases)
+    print(f"Created {len(data_product_canvases)} data product canvases")
+    
+    # ============================================
     # DOMAIN OWNERSHIP - Domain Journey Data
     # ============================================
     await db.domain_journeys.delete_many({})
